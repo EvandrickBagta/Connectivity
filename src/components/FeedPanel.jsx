@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useProjects } from '../hooks/useProjects'
 import PostCard from './PostCard'
-import { availableTags, sortOptions } from '../api/mockProjects'
 
 // Debounce hook
 const useDebounce = (value, delay) => {
@@ -62,60 +61,30 @@ const SkeletonCard = () => (
 
 const FeedPanel = ({ onSelectPost, onApply, onSave, onComment }) => {
   const [search, setSearch] = useState('')
-  const [selectedTags, setSelectedTags] = useState([])
-  const [sort, setSort] = useState('newest')
   const [showTagFilter, setShowTagFilter] = useState(false)
   
   const debouncedSearch = useDebounce(search, 300)
-  const sentinelRef = useRef(null)
 
   const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
+    data: projects,
     isLoading,
     error
-  } = useProjects({
-    search: debouncedSearch,
-    tags: selectedTags,
-    sort
-  })
-
-  // Handle tag selection
-  const toggleTag = (tag) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
-    )
-  }
+  } = useProjects()
 
   // Handle post selection
-  const handlePostClick = (post) => {
-    onSelectPost(post.id)
+  const handlePostClick = (project) => {
+    onSelectPost(project.id)
   }
 
-  // Intersection Observer for infinite scroll
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextPage && !isFetchingNextPage) {
-          fetchNextPage()
-        }
-      },
-      { threshold: 0.1 }
+  // Filter projects based on search
+  const filteredProjects = projects?.filter(project => {
+    if (!debouncedSearch) return true
+    const searchLower = debouncedSearch.toLowerCase()
+    return (
+      project.title.toLowerCase().includes(searchLower) ||
+      (project.description && project.description.toLowerCase().includes(searchLower))
     )
-
-    if (sentinelRef.current) {
-      observer.observe(sentinelRef.current)
-    }
-
-    return () => observer.disconnect()
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage])
-
-  // Get all projects from all pages
-  const allProjects = data?.pages?.flatMap(page => page.projects) || []
+  }) || []
 
   return (
     <div className="h-full flex flex-col">
@@ -123,112 +92,23 @@ const FeedPanel = ({ onSelectPost, onApply, onSave, onComment }) => {
       <div className="p-6 border-b border-gray-200 bg-white">
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Explore Projects</h2>
         
-        {/* Search and Controls */}
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 lg:space-x-6">
-          {/* Search */}
-          <div className="flex-1 max-w-md">
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search projects..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-              />
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
+        {/* Search */}
+        <div className="flex-1 max-w-md">
+          <div className="relative">
+            <input
+              type="text"
+              placeholder="Search projects..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
             </div>
-          </div>
-
-          {/* Filters and Sort */}
-          <div className="flex items-center space-x-4">
-            {/* Tag Filter */}
-            <div className="relative">
-              <button
-                onClick={() => setShowTagFilter(!showTagFilter)}
-                className="flex items-center space-x-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50"
-              >
-                <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                </svg>
-                <span>Tags</span>
-                {selectedTags.length > 0 && (
-                  <span className="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">
-                    {selectedTags.length}
-                  </span>
-                )}
-              </button>
-
-              {/* Tag Dropdown */}
-              {showTagFilter && (
-                <div className="absolute top-full left-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50 max-h-60 overflow-y-auto">
-                  <div className="p-4">
-                    <div className="flex flex-wrap gap-2">
-                      {availableTags.map(tag => (
-                        <button
-                          key={tag}
-                          onClick={() => toggleTag(tag)}
-                          className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
-                            selectedTags.includes(tag)
-                              ? 'bg-indigo-100 text-indigo-800'
-                              : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                          }`}
-                        >
-                          {tag}
-                        </button>
-                      ))}
-                    </div>
-                    {selectedTags.length > 0 && (
-                      <button
-                        onClick={() => setSelectedTags([])}
-                        className="mt-3 text-sm text-indigo-600 hover:text-indigo-800"
-                      >
-                        Clear all
-                      </button>
-                    )}
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* Sort */}
-            <select
-              value={sort}
-              onChange={(e) => setSort(e.target.value)}
-              className="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-            >
-              {sortOptions.map(option => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
           </div>
         </div>
-
-        {/* Selected Tags Display */}
-        {selectedTags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {selectedTags.map(tag => (
-              <span
-                key={tag}
-                className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-indigo-100 text-indigo-800"
-              >
-                {tag}
-                <button
-                  onClick={() => toggleTag(tag)}
-                  className="ml-2 text-indigo-600 hover:text-indigo-800"
-                  aria-label={`Remove ${tag} filter`}
-                >
-                  ×
-                </button>
-              </span>
-            ))}
-          </div>
-        )}
       </div>
 
       {/* Feed Content */}
@@ -258,22 +138,19 @@ const FeedPanel = ({ onSelectPost, onApply, onSave, onComment }) => {
         {/* Projects List */}
         {!isLoading && !error && (
           <>
-            {allProjects.length === 0 ? (
+            {filteredProjects.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-400 mb-4">
                   <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.491M15 6.75a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No projects available yet</h3>
-                <p className="text-gray-600 mb-4">Be the first to share your project!</p>
-                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
-                  Share Your Project
-                </button>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
+                <p className="text-gray-600">Try adjusting your search or add a new project.</p>
               </div>
             ) : (
               <div className="space-y-6">
-                {allProjects.map(project => (
+                {filteredProjects.map(project => (
                   <div 
                     key={project.id}
                     onClick={() => handlePostClick(project)}
@@ -287,23 +164,6 @@ const FeedPanel = ({ onSelectPost, onApply, onSave, onComment }) => {
                     />
                   </div>
                 ))}
-              </div>
-            )}
-
-            {/* Load More Trigger */}
-            <div ref={sentinelRef} className="h-10 flex items-center justify-center">
-              {isFetchingNextPage && (
-                <div className="flex items-center space-x-2 text-gray-600">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-indigo-600"></div>
-                  <span>Loading more projects...</span>
-                </div>
-              )}
-            </div>
-
-            {/* End of Results */}
-            {!hasNextPage && allProjects.length > 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>You've reached the end of the results</p>
               </div>
             )}
           </>

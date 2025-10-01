@@ -61,16 +61,36 @@ src/
 - **Supabase** - Backend-as-a-Service for database and authentication
 - **React Query** - Data fetching and caching library
 
-## Supabase Setup
+## Supabase Integration
 
-This project includes Supabase integration for backend services. See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for detailed setup instructions.
+This project includes full Supabase integration for backend services with the following features:
 
-### Quick Setup
+### Database Schema
+- **Projects Table**: Stores project information with fields for title, description, link, and timestamps
+- **Row Level Security**: Configured for secure data access
+- **Real-time Updates**: Projects update live across all connected clients
 
-1. Install dependencies: `npm install`
-2. Create a `.env` file with your Supabase credentials:
+### Features Implemented
+- ✅ **Project Management**: Create, read, update, and delete projects
+- ✅ **Real-time Feed**: Live updates when projects are added or deleted
+- ✅ **Search Functionality**: Filter projects by title and description
+- ✅ **Project Details**: View detailed project information with delete functionality
+- ✅ **Loading States**: Proper loading indicators and error handling
+- ✅ **Responsive Design**: Works on desktop and mobile devices
+
+### Setup Instructions
+
+1. **Database Setup**: Follow the instructions in [DATABASE_SCHEMA.md](./DATABASE_SCHEMA.md)
+2. **Environment Variables**: Create a `.env` file with your Supabase credentials:
    ```
    VITE_SUPABASE_URL=your_supabase_url_here
    VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
    ```
-3. Start the development server: `npm run dev`
+3. **Install and Run**:
+   ```bash
+   npm install
+   npm run dev
+   ```
+
+### Testing
+See [TESTING_GUIDE.md](./TESTING_GUIDE.md) for comprehensive testing instructions.

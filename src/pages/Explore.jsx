@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import FeedPanel from '../components/FeedPanel'
 import DetailsPanel from '../components/DetailsPanel'
+import AddProjectModal from '../components/AddProjectModal'
 import { supabase } from '../lib/supabaseClient'
 
 // Create a query client
@@ -11,6 +12,7 @@ const queryClient = new QueryClient()
 const ExploreContent = ({ onNavigateToLanding }) => {
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [showDetails, setShowDetails] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
 
   // Test Supabase connection
   useEffect(() => {
@@ -80,7 +82,15 @@ const ExploreContent = ({ onNavigateToLanding }) => {
               <span>Back to Landing</span>
             </button>
             <h1 className="text-xl font-semibold text-gray-900">Explore Projects</h1>
-            <div className="w-24"></div> {/* Spacer for centering */}
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
+            >
+              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+              </svg>
+              <span>Add Project</span>
+            </button>
           </div>
         </div>
       </div>
@@ -133,6 +143,12 @@ const ExploreContent = ({ onNavigateToLanding }) => {
           )}
         </div>
       </div>
+
+      {/* Add Project Modal */}
+      <AddProjectModal 
+        isOpen={showAddModal} 
+        onClose={() => setShowAddModal(false)} 
+      />
     </div>
   )
 }
