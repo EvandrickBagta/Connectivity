@@ -96,11 +96,11 @@ const ExploreContent = ({ onNavigateToLanding }) => {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 overflow-hidden">
-        {/* Desktop: Split Screen */}
-        <div className="hidden md:flex h-full">
-          {/* Left Panel - Feed */}
-          <div className="flex-1 border-r border-gray-200 overflow-hidden">
+      <div className="flex-1 overflow-hidden relative">
+        {/* Large screens (lg+): 60-40 split */}
+        <div className="hidden lg:flex h-full">
+          {/* Left Panel - Feed (60%) */}
+          <div className="w-3/5 border-r border-gray-200 overflow-hidden">
             <FeedPanel 
               onSelectPost={handleSelectPost}
               onApply={handleApply}
@@ -109,8 +109,8 @@ const ExploreContent = ({ onNavigateToLanding }) => {
             />
           </div>
           
-          {/* Right Panel - Details */}
-          <div className="flex-1 overflow-hidden">
+          {/* Right Panel - Details (40%) */}
+          <div className="w-2/5 overflow-hidden">
             <DetailsPanel 
               selectedPostId={selectedPostId}
               onBack={handleBackToFeed}
@@ -121,18 +121,20 @@ const ExploreContent = ({ onNavigateToLanding }) => {
           </div>
         </div>
 
-        {/* Mobile: Single Column */}
-        <div className="md:hidden h-full">
-          {!showDetails ? (
-            /* Mobile Feed View */
+        {/* Medium screens (sm to md): 50-50 split */}
+        <div className="hidden sm:flex lg:hidden h-full">
+          {/* Left Panel - Feed (50%) */}
+          <div className="w-1/2 border-r border-gray-200 overflow-hidden">
             <FeedPanel 
               onSelectPost={handleSelectPost}
               onApply={handleApply}
               onSave={handleSave}
               onComment={handleComment}
             />
-          ) : (
-            /* Mobile Details View */
+          </div>
+          
+          {/* Right Panel - Details (50%) */}
+          <div className="w-1/2 overflow-hidden">
             <DetailsPanel 
               selectedPostId={selectedPostId}
               onBack={handleBackToFeed}
@@ -140,6 +142,40 @@ const ExploreContent = ({ onNavigateToLanding }) => {
               onSave={handleSave}
               onComment={handleComment}
             />
+          </div>
+        </div>
+
+        {/* Small screens: Feed only with drawer */}
+        <div className="sm:hidden h-full">
+          {/* Feed View */}
+          <FeedPanel 
+            onSelectPost={handleSelectPost}
+            onApply={handleApply}
+            onSave={handleSave}
+            onComment={handleComment}
+          />
+          
+          {/* Drawer for Details */}
+          {showDetails && (
+            <>
+              {/* Backdrop */}
+              <div 
+                className="fixed inset-0 bg-black bg-opacity-50 z-40 transition-opacity duration-300 ease-in-out"
+                onClick={handleBackToFeed}
+              />
+              
+              {/* Drawer */}
+              <div className="fixed inset-y-0 right-0 w-full sm:w-5/6 bg-white shadow-xl z-50 transform transition-all duration-300 ease-in-out animate-in slide-in-from-right">
+                <DetailsPanel 
+                  selectedPostId={selectedPostId}
+                  onBack={handleBackToFeed}
+                  onApply={handleApply}
+                  onSave={handleSave}
+                  onComment={handleComment}
+                  isDrawer={true}
+                />
+              </div>
+            </>
           )}
         </div>
       </div>

@@ -112,10 +112,10 @@ const FeedPanel = ({ onSelectPost, onApply, onSave, onComment }) => {
       </div>
 
       {/* Feed Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
         {/* Loading State */}
         {isLoading && (
-          <div className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             {[...Array(6)].map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -149,12 +149,12 @@ const FeedPanel = ({ onSelectPost, onApply, onSave, onComment }) => {
                 <p className="text-gray-600">Try adjusting your search or add a new project.</p>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
                 {filteredProjects.map(project => (
                   <div 
                     key={project.id}
                     onClick={() => handlePostClick(project)}
-                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out"
                   >
                     <PostCard
                       project={project}

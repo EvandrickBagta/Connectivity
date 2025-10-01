@@ -1,7 +1,7 @@
 import React, { useState } from 'react'
 import { useProjectById, useDeleteProject } from '../hooks/useProjects'
 
-const PostDetail = ({ postId, onBack, onApply, onSave, onComment }) => {
+const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = false }) => {
   const [isApplied, setIsApplied] = useState(false)
   const [isSaved, setIsSaved] = useState(false)
   const [isApplying, setIsApplying] = useState(false)
@@ -111,21 +111,23 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment }) => {
 
   return (
     <div className="h-full flex flex-col">
-      {/* Mobile Back Button */}
-      <div className="md:hidden p-4 border-b border-gray-200">
-        <button 
-          onClick={onBack}
-          className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-        >
-          <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-          </svg>
-          <span>Back to Feed</span>
-        </button>
-      </div>
+      {/* Mobile Back Button - Only in drawer mode */}
+      {isDrawer && (
+        <div className="p-4 border-b border-gray-200">
+          <button 
+            onClick={onBack}
+            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
+          >
+            <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+            <span>Back to Feed</span>
+          </button>
+        </div>
+      )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
         {/* Project Info */}
         <div className="flex items-center space-x-4 mb-6">
           <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -168,12 +170,13 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment }) => {
           </p>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-col sm:flex-row gap-3">
+        {/* Action Buttons - Responsive Layout */}
+        {/* Large screens: Side by side */}
+        <div className="hidden lg:flex flex-wrap gap-3 mt-6">
           <button
             onClick={handleApply}
             disabled={isApplied || isApplying}
-            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
+            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors whitespace-nowrap ${
               isApplied 
                 ? 'bg-green-100 text-green-700 cursor-not-allowed' 
                 : isApplying
@@ -207,6 +210,55 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment }) => {
             onClick={handleDelete}
             disabled={deleteProjectMutation.isPending}
             className="px-6 py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium transition-colors disabled:opacity-50"
+          >
+            {deleteProjectMutation.isPending ? 'Deleting...' : 'Delete'}
+          </button>
+        </div>
+
+        {/* Medium screens and below: Vertical stacked layout */}
+        <div className="lg:hidden space-y-3 mt-6">
+          {/* First row: Apply to Project (full width) */}
+          <button
+            onClick={handleApply}
+            disabled={isApplied || isApplying}
+            className={`w-full py-3 px-6 rounded-lg font-medium transition-colors whitespace-nowrap ${
+              isApplied 
+                ? 'bg-green-100 text-green-700 cursor-not-allowed' 
+                : isApplying
+                ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+          >
+            {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply to Project'}
+          </button>
+          
+          {/* Second row: Save and Comment side by side */}
+          <div className="flex gap-3">
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
+                isSaved 
+                  ? 'bg-yellow-100 text-yellow-700' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+            >
+              {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save'}
+            </button>
+            
+            <button
+              onClick={handleComment}
+              className="flex-1 py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+            >
+              Comment
+            </button>
+          </div>
+
+          {/* Third row: Delete (full width) */}
+          <button
+            onClick={handleDelete}
+            disabled={deleteProjectMutation.isPending}
+            className="w-full py-3 px-6 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium transition-colors disabled:opacity-50"
           >
             {deleteProjectMutation.isPending ? 'Deleting...' : 'Delete'}
           </button>

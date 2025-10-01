@@ -55,9 +55,9 @@ const PostCard = ({ project, onApply, onSave, onComment }) => {
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 overflow-hidden">
+    <div className="bg-white rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:-translate-y-1 border border-gray-100 overflow-hidden h-full flex flex-col">
       {/* Header */}
-      <div className="p-6 pb-4">
+      <div className="p-6 pb-4 flex-grow">
         <div className="flex items-start justify-between mb-4">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-indigo-100 rounded-full flex items-center justify-center">
@@ -95,8 +95,9 @@ const PostCard = ({ project, onApply, onSave, onComment }) => {
       </div>
 
       {/* Actions */}
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-100">
-        <div className="flex space-x-3">
+      <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 mt-auto">
+        {/* Desktop: Side by side */}
+        <div className="hidden sm:flex space-x-3">
           <button
             onClick={handleApply}
             disabled={isApplied || isApplying}
@@ -132,6 +133,49 @@ const PostCard = ({ project, onApply, onSave, onComment }) => {
           >
             Comment
           </button>
+        </div>
+        
+        {/* Mobile: Stacked in 2 rows */}
+        <div className="sm:hidden space-y-2">
+          {/* First row: Apply button (full width) */}
+          <button
+            onClick={handleApply}
+            disabled={isApplied || isApplying}
+            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
+              isApplied 
+                ? 'bg-green-100 text-green-700 cursor-not-allowed' 
+                : isApplying
+                ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
+                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+            }`}
+            aria-label={isApplied ? 'Applied to project' : 'Apply to project'}
+          >
+            {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply'}
+          </button>
+          
+          {/* Second row: Save and Comment buttons */}
+          <div className="flex space-x-2">
+            <button
+              onClick={handleSave}
+              disabled={isSaving}
+              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
+                isSaved 
+                  ? 'bg-yellow-100 text-yellow-700' 
+                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+              }`}
+              aria-label={isSaved ? 'Remove from saved' : 'Save project'}
+            >
+              {isSaving ? '...' : isSaved ? 'Saved' : 'Save'}
+            </button>
+            
+            <button
+              onClick={handleComment}
+              className="flex-1 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+              aria-label="Comment on project"
+            >
+              Comment
+            </button>
+          </div>
         </div>
       </div>
     </div>
