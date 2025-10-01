@@ -9,6 +9,8 @@ A networking platform for students built with React and Vite.
 - 🎨 Tailwind CSS for styling
 - 📱 Responsive design
 - 🚀 Modern development experience
+- 🗄️ Supabase integration for backend services
+- 🔄 React Query for data fetching and caching
 
 ## Getting Started
 
@@ -56,3 +58,19 @@ src/
 - **Tailwind CSS** - Utility-first CSS framework
 - **PostCSS** - CSS processing
 - **Autoprefixer** - CSS vendor prefixing
+- **Supabase** - Backend-as-a-Service for database and authentication
+- **React Query** - Data fetching and caching library
+
+## Supabase Setup
+
+This project includes Supabase integration for backend services. See [SUPABASE_SETUP.md](./SUPABASE_SETUP.md) for detailed setup instructions.
+
+### Quick Setup
+
+1. Install dependencies: `npm install`
+2. Create a `.env` file with your Supabase credentials:
+   ```
+   VITE_SUPABASE_URL=your_supabase_url_here
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+   ```
+3. Start the development server: `npm run dev`

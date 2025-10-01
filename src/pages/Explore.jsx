@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import FeedPanel from '../components/FeedPanel'
 import DetailsPanel from '../components/DetailsPanel'
+import { supabase } from '../lib/supabaseClient'
 
 // Create a query client
 const queryClient = new QueryClient()
@@ -10,6 +11,26 @@ const queryClient = new QueryClient()
 const ExploreContent = ({ onNavigateToLanding }) => {
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [showDetails, setShowDetails] = useState(false)
+
+  // Test Supabase connection
+  useEffect(() => {
+    const testSupabaseConnection = async () => {
+      try {
+        // Test connection by fetching from a projects table
+        const { data, error } = await supabase.from('projects').select('*').limit(1);
+        
+        if (error) {
+          console.log('Supabase connection test (expected error - table may not exist):', error.message);
+        } else {
+          console.log('Supabase connection successful:', data);
+        }
+      } catch (err) {
+        console.log('Supabase connection test failed:', err.message);
+      }
+    };
+
+    testSupabaseConnection();
+  }, []);
 
   // Handle post selection
   const handleSelectPost = (postId) => {

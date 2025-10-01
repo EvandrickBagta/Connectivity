@@ -265,8 +265,11 @@ const FeedPanel = ({ onSelectPost, onApply, onSave, onComment }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.491M15 6.75a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
-                <p className="text-gray-600">Try adjusting your search or filters.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No projects available yet</h3>
+                <p className="text-gray-600 mb-4">Be the first to share your project!</p>
+                <button className="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                  Share Your Project
+                </button>
               </div>
             ) : (
               <div className="space-y-6">
