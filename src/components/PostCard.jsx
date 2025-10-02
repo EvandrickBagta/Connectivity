@@ -1,43 +1,22 @@
-import React, { useState } from 'react'
+import React from 'react'
 
-const PostCard = ({ project, onApply, onSave, onComment }) => {
-  const [isApplied, setIsApplied] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
-  const [isApplying, setIsApplying] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
-
-  const handleApply = async () => {
-    if (isApplied || isApplying) return
-    
-    setIsApplying(true)
-    try {
-      await onApply(project)
-      setIsApplied(true)
-    } catch (error) {
-      console.error('Failed to apply:', error)
-    } finally {
-      setIsApplying(false)
-    }
-  }
-
-  const handleSave = async () => {
-    setIsSaving(true)
-    try {
-      await onSave(project)
-      setIsSaved(!isSaved)
-    } catch (error) {
-      console.error('Failed to save:', error)
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
-  const handleComment = () => {
-    onComment(project)
-  }
-
+const PostCard = ({ project }) => {
   const getInitials = (name) => {
     return name.split(' ').map(n => n[0]).join('').toUpperCase()
+  }
+
+  const getTagColor = (tag, index) => {
+    const colors = [
+      'bg-blue-100 text-blue-800',
+      'bg-green-100 text-green-800', 
+      'bg-purple-100 text-purple-800',
+      'bg-yellow-100 text-yellow-800',
+      'bg-pink-100 text-pink-800',
+      'bg-indigo-100 text-indigo-800'
+    ]
+    // Use a combination of tag content and index for consistent but varied colors
+    const colorIndex = (tag.length + index) % colors.length
+    return colors[colorIndex]
   }
 
   const formatDate = (dateString) => {
@@ -78,106 +57,23 @@ const PostCard = ({ project, onApply, onSave, onComment }) => {
           <h2 className="text-xl font-bold text-gray-900 mb-2">{project.title}</h2>
           <p className="text-gray-600 line-clamp-2">{project.description || 'No description provided.'}</p>
         </div>
-
-        {/* Link if available */}
-        {project.link && (
-          <div className="mb-4">
-            <a 
-              href={project.link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-indigo-600 hover:text-indigo-800 text-sm font-medium"
-            >
-              View Project Link →
-            </a>
-          </div>
-        )}
       </div>
 
-      {/* Actions */}
-      <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 mt-auto">
-        {/* Desktop: Side by side */}
-        <div className="hidden sm:flex space-x-3">
-          <button
-            onClick={handleApply}
-            disabled={isApplied || isApplying}
-            className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-              isApplied 
-                ? 'bg-green-100 text-green-700 cursor-not-allowed' 
-                : isApplying
-                ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
-            aria-label={isApplied ? 'Applied to project' : 'Apply to project'}
-          >
-            {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply'}
-          </button>
-          
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              isSaved 
-                ? 'bg-yellow-100 text-yellow-700' 
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
-            aria-label={isSaved ? 'Remove from saved' : 'Save project'}
-          >
-            {isSaving ? '...' : isSaved ? 'Saved' : 'Save'}
-          </button>
-          
-          <button
-            onClick={handleComment}
-            className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-            aria-label="Comment on project"
-          >
-            Comment
-          </button>
-        </div>
-        
-        {/* Mobile: Stacked in 2 rows */}
-        <div className="sm:hidden space-y-2">
-          {/* First row: Apply button (full width) */}
-          <button
-            onClick={handleApply}
-            disabled={isApplied || isApplying}
-            className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
-              isApplied 
-                ? 'bg-green-100 text-green-700 cursor-not-allowed' 
-                : isApplying
-                ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
-            aria-label={isApplied ? 'Applied to project' : 'Apply to project'}
-          >
-            {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply'}
-          </button>
-          
-          {/* Second row: Save and Comment buttons */}
-          <div className="flex space-x-2">
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-                isSaved 
-                  ? 'bg-yellow-100 text-yellow-700' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-              aria-label={isSaved ? 'Remove from saved' : 'Save project'}
-            >
-              {isSaving ? '...' : isSaved ? 'Saved' : 'Save'}
-            </button>
-            
-            <button
-              onClick={handleComment}
-              className="flex-1 py-2 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-              aria-label="Comment on project"
-            >
-              Comment
-            </button>
+      {/* Tags Footer */}
+      {project.tags && project.tags.length > 0 && (
+        <div className="px-6 py-3 bg-gray-50 border-t border-gray-200">
+          <div className="flex flex-wrap gap-2">
+            {project.tags.map((tag, index) => (
+              <span 
+                key={index}
+                className={`px-3 py-1 ${getTagColor(tag, index)} text-sm font-medium rounded-full`}
+              >
+                {tag}
+              </span>
+            ))}
           </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

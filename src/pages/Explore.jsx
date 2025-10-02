@@ -82,15 +82,7 @@ const ExploreContent = ({ onNavigateToLanding }) => {
               <span>Back to Landing</span>
             </button>
             <h1 className="text-xl font-semibold text-gray-900">Explore Projects</h1>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-              </svg>
-              <span>Add Project</span>
-            </button>
+            <div></div> {/* Empty div for spacing */}
           </div>
         </div>
       </div>
@@ -103,9 +95,7 @@ const ExploreContent = ({ onNavigateToLanding }) => {
           <div className="w-3/5 border-r border-gray-200 overflow-hidden">
             <FeedPanel 
               onSelectPost={handleSelectPost}
-              onApply={handleApply}
-              onSave={handleSave}
-              onComment={handleComment}
+              onAddProject={() => setShowAddModal(true)}
             />
           </div>
           
@@ -127,9 +117,7 @@ const ExploreContent = ({ onNavigateToLanding }) => {
           <div className="w-1/2 border-r border-gray-200 overflow-hidden">
             <FeedPanel 
               onSelectPost={handleSelectPost}
-              onApply={handleApply}
-              onSave={handleSave}
-              onComment={handleComment}
+              onAddProject={() => setShowAddModal(true)}
             />
           </div>
           
@@ -150,9 +138,7 @@ const ExploreContent = ({ onNavigateToLanding }) => {
           {/* Feed View */}
           <FeedPanel 
             onSelectPost={handleSelectPost}
-            onApply={handleApply}
-            onSave={handleSave}
-            onComment={handleComment}
+            onAddProject={() => setShowAddModal(true)}
           />
           
           {/* Drawer for Details */}

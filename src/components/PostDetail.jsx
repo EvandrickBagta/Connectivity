@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useProjectById, useDeleteProject } from '../hooks/useProjects'
+import { useProjectById } from '../hooks/useProjects'
 
 const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = false }) => {
   const [isApplied, setIsApplied] = useState(false)
@@ -8,7 +8,6 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
   const [isSaving, setIsSaving] = useState(false)
 
   const { data: project, isLoading, error } = useProjectById(postId)
-  const deleteProjectMutation = useDeleteProject()
 
   const handleApply = async () => {
     if (isApplied || isApplying || !project) return
@@ -41,17 +40,6 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
   const handleComment = () => {
     if (project) {
       onComment(project)
-    }
-  }
-
-  const handleDelete = async () => {
-    if (!project || !window.confirm('Are you sure you want to delete this project?')) return
-    
-    try {
-      await deleteProjectMutation.mutateAsync(project.id)
-      onBack() // Navigate back to feed after deletion
-    } catch (error) {
-      console.error('Failed to delete project:', error)
     }
   }
 
@@ -127,141 +115,141 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
       )}
 
       {/* Content */}
-      <div className="flex-1 overflow-y-auto p-4 lg:p-6">
-        {/* Project Info */}
-        <div className="flex items-center space-x-4 mb-6">
-          <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
-            <span className="text-indigo-600 font-semibold text-lg">
-              {project.title.charAt(0).toUpperCase()}
-            </span>
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-gray-900">Project</h3>
-            <p className="text-gray-600">Created by user</p>
-            <p className="text-sm text-gray-500">Posted on {formatDate(project.created_at)}</p>
-          </div>
-        </div>
-
-        {/* Project Title */}
-        <h1 className="text-3xl font-bold text-gray-900 mb-4">{project.title}</h1>
-
-        {/* Link if available */}
-        {project.link && (
-          <div className="mb-6">
-            <a 
-              href={project.link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="inline-flex items-center px-4 py-2 bg-indigo-100 text-indigo-800 rounded-lg hover:bg-indigo-200 transition-colors"
-            >
-              <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
-              </svg>
-              View Project Link
-            </a>
-          </div>
-        )}
-
-        {/* Description */}
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-3">Project Description</h2>
-          <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-            {project.description || 'No description provided.'}
-          </p>
-        </div>
-
-        {/* Action Buttons - Responsive Layout */}
-        {/* Large screens: Side by side */}
-        <div className="hidden lg:flex flex-wrap gap-3 mt-6">
-          <button
-            onClick={handleApply}
-            disabled={isApplied || isApplying}
-            className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              isApplied 
-                ? 'bg-green-100 text-green-700 cursor-not-allowed' 
-                : isApplying
-                ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
-          >
-            {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply to Project'}
-          </button>
+      <div className="flex-1 overflow-hidden p-4 lg:p-6">
+        {/* Stacked Layout Container */}
+        <div className="flex flex-col gap-4 h-full">
           
-          <button
-            onClick={handleSave}
-            disabled={isSaving}
-            className={`px-6 py-3 rounded-lg font-medium transition-colors ${
-              isSaved 
-                ? 'bg-yellow-100 text-yellow-700' 
-                : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-            }`}
-          >
-            {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save'}
-          </button>
-          
-          <button
-            onClick={handleComment}
-            className="px-6 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-          >
-            Comment
-          </button>
+          {/* Top Row: Project Info, Title, Links, and Action Buttons */}
+          <div className="flex-shrink-0">
+            {/* Project Info with Links Section */}
+            <div className="flex flex-col sm:flex-row justify-between items-center mb-4 gap-4">
+              {/* Left Section: Project Info */}
+              <div className="flex items-center space-x-4">
+                <div className="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center">
+                  <span className="text-indigo-600 font-semibold text-lg">
+                    {project.title.charAt(0).toUpperCase()}
+                  </span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Project</h3>
+                  <p className="text-gray-600">Created by user</p>
+                  <p className="text-sm text-gray-500">Posted on {formatDate(project.created_at)}</p>
+                </div>
+              </div>
 
-          <button
-            onClick={handleDelete}
-            disabled={deleteProjectMutation.isPending}
-            className="px-6 py-3 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium transition-colors disabled:opacity-50"
-          >
-            {deleteProjectMutation.isPending ? 'Deleting...' : 'Delete'}
-          </button>
-        </div>
+              {/* Right Section: Links Column */}
+              <div className="flex flex-col space-y-2">
+                {project.link && (
+                  <a 
+                    href={project.link} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center px-4 py-2 bg-indigo-100 text-indigo-800 rounded-lg hover:bg-indigo-200 transition-colors"
+                  >
+                    <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                    </svg>
+                    View External Link
+                  </a>
+                )}
+              </div>
+            </div>
 
-        {/* Medium screens and below: Vertical stacked layout */}
-        <div className="lg:hidden space-y-3 mt-6">
-          {/* First row: Apply to Project (full width) */}
-          <button
-            onClick={handleApply}
-            disabled={isApplied || isApplying}
-            className={`w-full py-3 px-6 rounded-lg font-medium transition-colors whitespace-nowrap ${
-              isApplied 
-                ? 'bg-green-100 text-green-700 cursor-not-allowed' 
-                : isApplying
-                ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
-                : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-            }`}
-          >
-            {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply to Project'}
-          </button>
-          
-          {/* Second row: Save and Comment side by side */}
-          <div className="flex gap-3">
-            <button
-              onClick={handleSave}
-              disabled={isSaving}
-              className={`flex-1 py-3 px-6 rounded-lg font-medium transition-colors ${
-                isSaved 
-                  ? 'bg-yellow-100 text-yellow-700' 
-                  : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-              }`}
-            >
-              {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save'}
-            </button>
-            
-            <button
-              onClick={handleComment}
-              className="flex-1 py-3 px-6 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
-            >
-              Comment
-            </button>
+            {/* Project Title */}
+            <h1 className="text-3xl font-bold text-gray-900 mb-4">{project.title}</h1>
+
+            {/* Action Buttons - Responsive Layout */}
+            {/* Large screens: Apply first, Save+Comment together */}
+            <div className="hidden lg:flex flex-wrap gap-2">
+              {/* Apply to Project - Always first row */}
+              <button
+                onClick={handleApply}
+                disabled={isApplied || isApplying}
+                className={`whitespace-nowrap flex-shrink-0 min-w-max px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isApplied 
+                    ? 'bg-green-100 text-green-700 cursor-not-allowed' 
+                    : isApplying
+                    ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                }`}
+              >
+                {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply to Project'}
+              </button>
+              
+              {/* Save and Comment - Always together */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                    isSaved 
+                      ? 'bg-yellow-100 text-yellow-700' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save'}
+                </button>
+                
+                <button
+                  onClick={handleComment}
+                  className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                >
+                  Comment
+                </button>
+              </div>
+            </div>
+
+            {/* Small screens: Stacked layout */}
+            <div className="lg:hidden space-y-2">
+              {/* Row 1: Apply to Project */}
+              <button
+                onClick={handleApply}
+                disabled={isApplied || isApplying}
+                className={`w-full whitespace-nowrap flex-shrink-0 min-w-max px-4 py-2 rounded-lg font-medium transition-colors ${
+                  isApplied 
+                    ? 'bg-green-100 text-green-700 cursor-not-allowed' 
+                    : isApplying
+                    ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
+                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
+                }`}
+              >
+                {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply to Project'}
+              </button>
+              
+              {/* Row 2: Save and Comment together */}
+              <div className="flex gap-2">
+                <button
+                  onClick={handleSave}
+                  disabled={isSaving}
+                  className={`flex-1 px-4 py-2 rounded-lg font-medium transition-colors ${
+                    isSaved 
+                      ? 'bg-yellow-100 text-yellow-700' 
+                      : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                  }`}
+                >
+                  {isSaving ? 'Saving...' : isSaved ? 'Saved' : 'Save'}
+                </button>
+                
+                <button
+                  onClick={handleComment}
+                  className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
+                >
+                  Comment
+                </button>
+              </div>
+            </div>
           </div>
 
-          {/* Third row: Delete (full width) */}
-          <button
-            onClick={handleDelete}
-            disabled={deleteProjectMutation.isPending}
-            className="w-full py-3 px-6 bg-red-100 hover:bg-red-200 text-red-700 rounded-lg font-medium transition-colors disabled:opacity-50"
-          >
-            {deleteProjectMutation.isPending ? 'Deleting...' : 'Delete'}
-          </button>
+          {/* Second Row: Scrollable Project Description */}
+          <div className="flex-1 min-h-0 w-full">
+            <div className="bg-white rounded p-4 h-full w-full max-h-[400px] overflow-y-auto border-t-2 border-b-2 border-gray-100">
+              <h2 className="text-xl font-semibold text-gray-900 mb-3 sticky top-0 bg-white pb-2">Project Description</h2>
+              <p className="text-gray-700 leading-relaxed whitespace-pre-line">
+                {project.description || 'No description provided.'}
+              </p>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>

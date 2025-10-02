@@ -5,6 +5,7 @@ export interface Project {
   title: string;
   description?: string;
   link?: string;
+  tags?: string[];
   created_at: string;
 }
 
@@ -12,6 +13,7 @@ export interface CreateProjectData {
   title: string;
   description?: string;
   link?: string;
+  tags?: string[];
 }
 
 /**
