@@ -68,25 +68,6 @@ const ExploreContent = ({ onNavigateToLanding }) => {
 
   return (
     <div className="h-screen flex flex-col">
-      {/* Header */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-200">
-        <div className="px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex items-center justify-between">
-            <button 
-              onClick={onNavigateToLanding}
-              className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-            >
-              <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-              <span>Back to Landing</span>
-            </button>
-            <h1 className="text-xl font-semibold text-gray-900">Explore Projects</h1>
-            <div></div> {/* Empty div for spacing */}
-          </div>
-        </div>
-      </div>
-
       {/* Main Content */}
       <div className="flex-1 overflow-hidden relative">
         {/* Large screens (lg+): 60-40 split */}
