@@ -212,8 +212,7 @@ const LandingPage = ({ onNavigateToExplore }) => {
             <div className="flex justify-center space-x-6">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">Discord</a>
               <a href="#" className="text-gray-400 hover:text-white transition-colors">GitHub</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Developers</a>
-              <a href="#" className="text-gray-400 hover:text-white transition-colors">Contacts</a>
+              <a href="#" className="text-gray-400 hover:text-white transition-colors">Developers-Contacts</a>
             </div>
           </div>
         </div>
