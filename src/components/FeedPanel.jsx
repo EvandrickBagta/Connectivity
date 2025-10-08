@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useProjects } from '../hooks/useProjects'
 import PostCard from './PostCard'
+import { useUser } from '@clerk/clerk-react'
 
 // Debounce hook
 const useDebounce = (value, delay) => {
@@ -62,6 +63,7 @@ const SkeletonCard = () => (
 const FeedPanel = ({ onSelectPost, onAddProject }) => {
   const [search, setSearch] = useState('')
   const [showTagFilter, setShowTagFilter] = useState(false)
+  const { user } = useUser()
   
   const debouncedSearch = useDebounce(search, 300)
 
@@ -90,7 +92,7 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
     <div className="h-full flex flex-col bg-slate-50">
       {/* Header */}
       <div className="p-6 border-b border-gray-200 bg-white">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Explore Projects</h2>
+        <h2 className="text-2xl font-bold text-gray-900 mb-4">Explore Activities</h2>
         
         {/* Search and Add Project */}
         <div className="flex flex-col sm:flex-row gap-2 lg:gap-4">
@@ -99,7 +101,7 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search projects..."
+                placeholder="Search activities..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -120,7 +122,7 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
             <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
             </svg>
-            <span>Add Project</span>
+            <span>Add Activity</span>
           </button>
         </div>
       </div>
@@ -159,8 +161,8 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.172 16.172a4 4 0 015.656 0M9 12h6m-6-4h6m2 5.291A7.962 7.962 0 0112 15c-2.34 0-4.29-1.009-5.824-2.491M15 6.75a3 3 0 11-6 0 3 3 0 016 0z" />
                   </svg>
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No projects found</h3>
-                <p className="text-gray-600">Try adjusting your search or add a new project.</p>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">No activities found</h3>
+                <p className="text-gray-600">Try adjusting your search or add a new activity.</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
@@ -168,10 +170,11 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
                   <div 
                     key={project.id}
                     onClick={() => handlePostClick(project)}
-                    className="cursor-pointer hover:shadow-lg hover:-translate-y-1 transition-all duration-300 ease-in-out"
+                    className="cursor-pointer"
                   >
                     <PostCard
                       project={project}
+                      currentUserId={user?.id}
                     />
                   </div>
                 ))}

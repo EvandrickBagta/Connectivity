@@ -25,10 +25,10 @@ const DetailsPanel = ({ selectedPostId, onBack, onApply, onSave, onComment, isDr
           
           {/* Placeholder Text */}
           <h3 className="text-xl font-semibold text-gray-900 mb-2">
-            Select a project to view details
+            Select an activity to view details
           </h3>
           <p className="text-gray-600 max-w-md">
-            Choose a project from the feed on the left to see its full description, 
+            Choose an activity from the feed on the left to see its full description, 
             team requirements, and other details here.
           </p>
           
@@ -36,7 +36,7 @@ const DetailsPanel = ({ selectedPostId, onBack, onApply, onSave, onComment, isDr
           <div className="mt-8 p-4 bg-gray-50 rounded-lg">
             <h4 className="text-sm font-medium text-gray-900 mb-2">What you'll see:</h4>
             <ul className="text-sm text-gray-600 space-y-1">
-              <li>• Complete project description</li>
+              <li>• Complete activity description</li>
               <li>• Team size and roles needed</li>
               <li>• Author information and contact</li>
               <li>• Apply, save, and comment options</li>

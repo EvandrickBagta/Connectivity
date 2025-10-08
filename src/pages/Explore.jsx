@@ -1,18 +1,24 @@
 import React, { useState, useEffect } from 'react'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import FeedPanel from '../components/FeedPanel'
 import DetailsPanel from '../components/DetailsPanel'
 import AddProjectModal from '../components/AddProjectModal'
 import { supabase } from '../lib/supabaseClient'
 
-// Create a query client
-const queryClient = new QueryClient()
-
 // Main Explore component
-const ExploreContent = ({ onNavigateToLanding }) => {
+const Explore = ({ onNavigateToLanding }) => {
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [showDetails, setShowDetails] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
+
+  // Initialize selected activity from URL on component mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search)
+    const activityId = urlParams.get('activity')
+    if (activityId) {
+      setSelectedPostId(activityId)
+      setShowDetails(true)
+    }
+  }, [])
 
   // Test Supabase connection
   useEffect(() => {
@@ -38,12 +44,22 @@ const ExploreContent = ({ onNavigateToLanding }) => {
   const handleSelectPost = (postId) => {
     setSelectedPostId(postId)
     setShowDetails(true)
+    
+    // Update URL to remember selected activity
+    const url = new URL(window.location)
+    url.searchParams.set('activity', postId)
+    window.history.pushState({}, '', url)
   }
 
   // Handle back to feed (mobile)
   const handleBackToFeed = () => {
     setShowDetails(false)
     setSelectedPostId(null)
+    
+    // Clear activity from URL
+    const url = new URL(window.location)
+    url.searchParams.delete('activity')
+    window.history.pushState({}, '', url)
   }
 
   // Handle apply to project
@@ -153,15 +169,6 @@ const ExploreContent = ({ onNavigateToLanding }) => {
         onClose={() => setShowAddModal(false)} 
       />
     </div>
-  )
-}
-
-// Wrapper component with QueryClient
-const Explore = ({ onNavigateToLanding }) => {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <ExploreContent onNavigateToLanding={onNavigateToLanding} />
-    </QueryClientProvider>
   )
 }
 

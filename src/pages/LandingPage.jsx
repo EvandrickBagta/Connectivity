@@ -1,8 +1,8 @@
 import React from 'react'
 
 const LandingPage = ({ onNavigateToExplore }) => {
-  // Sample project data
-  const sampleProjects = [
+  // Sample activity data
+  const sampleActivities = [
     {
       title: "Campus Gardening App",
       description: "A mobile app connecting students interested in sustainable gardening and urban farming.",
@@ -51,30 +51,31 @@ const LandingPage = ({ onNavigateToExplore }) => {
             Connect with Students.<br />
             Build Together.
           </h1>
-          <p className="text-xl md:text-2xl text-gray-200 mb-12 max-w-4xl mx-auto">
-            Discover projects across all majors or share your own and find the teammates you need.
-          </p>
+          <div className="text-xl md:text-2xl text-gray-200 mb-12 max-w-4xl mx-auto text-center">
+            <p>Discover initiatives across all majors.</p>
+            <p>Or find the perfect teammates to make your vision come to life.</p>
+          </div>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <button 
               onClick={onNavigateToExplore}
               className="bg-white text-indigo-600 hover:bg-gray-100 font-bold py-4 px-8 rounded-lg text-lg transition-colors shadow-lg"
             >
-              Explore Projects
+              Explore Activities
             </button>
             <button className="border-2 border-white text-white hover:bg-white hover:text-indigo-600 font-bold py-4 px-8 rounded-lg text-lg transition-colors">
-              Share Your Project
+              Share Your Activity
             </button>
           </div>
         </div>
       </section>
 
 
-      {/* Project Spotlight Section */}
+      {/* Activity Spotlight Section */}
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-              Featured Projects
+              Featured Activities
             </h2>
             <p className="text-xl text-gray-600">
               See what students are building together
@@ -82,12 +83,12 @@ const LandingPage = ({ onNavigateToExplore }) => {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {sampleProjects.map((project) => (
-              <div key={project.id} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
-                <h3 className="text-xl font-bold text-gray-900 mb-3">{project.title}</h3>
-                <p className="text-gray-600 mb-4">{project.description}</p>
+            {sampleActivities.map((activity) => (
+              <div key={activity.id} className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow border border-gray-100">
+                <h3 className="text-xl font-bold text-gray-900 mb-3">{activity.title}</h3>
+                <p className="text-gray-600 mb-4">{activity.description}</p>
                 <div className="flex flex-wrap gap-2 mb-4">
-                  {project.tags.map((tag, index) => (
+                  {activity.tags.map((tag, index) => (
                     <span key={index} className="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm font-medium">
                       {tag}
                     </span>
@@ -106,13 +107,13 @@ const LandingPage = ({ onNavigateToExplore }) => {
       <section className="py-20 bg-indigo-600">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-            Have a project idea? Start sharing today!
+            Have an activity idea? Start sharing today!
           </h2>
           <p className="text-xl text-indigo-200 mb-8 max-w-2xl mx-auto">
-            Join thousands of students already building amazing projects together
+            Join thousands of students already building amazing activities together
           </p>
           <button className="bg-white text-indigo-600 hover:bg-gray-100 font-bold py-4 px-8 rounded-lg text-lg transition-colors shadow-lg">
-            Share Your Project
+            Share Your Activity
           </button>
         </div>
       </section>
