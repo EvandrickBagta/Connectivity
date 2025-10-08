@@ -1,151 +1,171 @@
 import { supabase } from '../lib/supabaseClient';
-import { getMultipleUserDisplayNames } from '../lib/userLookup';
 
 export interface Project {
   id: string;
   title: string;
   description?: string;
-  link?: string; // TODO: Remove after migration to links field
-  links?: string[]; // New multiple links field
-  tags?: string[];
-  openings?: number;
   created_at: string;
+  tags?: string[];
   ownerId: string;
-  ownerDisplayName: string;
-  teamRoster: { [userId: string]: string };
+  teamRoster: Record<string, any>;
   teamIds: string[];
+  ownerDisplayName: string;
+  openings: number;
+  links: Record<string, any>[];
 }
 
 export interface CreateProjectData {
   title: string;
   description?: string;
-  link?: string; // TODO: Remove after migration to links field
-  links?: string[]; // New multiple links field
   tags?: string[];
-  openings?: number;
   ownerId: string;
-  ownerDisplayName: string;
-  teamRoster: { [userId: string]: string };
-  teamIds: string[];
+  teamRoster?: Record<string, any>;
+  teamIds?: string[];
+  openings?: number;
+  links?: Record<string, any>[];
 }
 
 /**
- * Fetch all projects from Supabase with current owner display names
+ * Get a single project with current owner display name
  */
-export const getProjects = async (): Promise<Project[]> => {
+export const getProjectById = async (projectId: string): Promise<Project | null> => {
   try {
-    console.log('🔍 Fetching projects with current display names...');
+    console.log('Fetching project by ID:', projectId);
     
-    // First, get all projects
-    const { data: projects, error } = await supabase
-      .from('projects')
-      .select('*')
-      .order('created_at', { ascending: false });
+    const { data, error } = await supabase
+      .rpc('get_project_with_owner', { project_id: projectId });
 
     if (error) {
+      console.error('Supabase error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      throw new Error(`Failed to fetch project: ${error.message}`);
+    }
+
+    if (!data || data.length === 0) {
+      console.log('No project found with ID:', projectId);
+      return null;
+    }
+
+    console.log('Project fetched successfully:', data[0]);
+    return data[0];
+  } catch (error) {
+    console.error('Error fetching project by ID:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get all projects with current owner display names
+ */
+export const getAllProjects = async (): Promise<Project[]> => {
+  try {
+    console.log('Fetching all projects');
+    
+    const { data, error } = await supabase
+      .rpc('get_all_projects_with_owners');
+
+    if (error) {
+      console.error('Supabase error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       throw new Error(`Failed to fetch projects: ${error.message}`);
     }
 
-    if (!projects || projects.length === 0) {
-      return [];
+    console.log('Projects fetched successfully:', data?.length || 0);
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching all projects:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get projects by owner with current display name
+ */
+export const getProjectsByOwner = async (ownerId: string): Promise<Project[]> => {
+  try {
+    console.log('Fetching projects by owner:', ownerId);
+    
+    const { data, error } = await supabase
+      .rpc('get_projects_by_owner', { owner_id: ownerId });
+
+    if (error) {
+      console.error('Supabase error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      throw new Error(`Failed to fetch projects by owner: ${error.message}`);
     }
 
-    // Get all unique owner IDs
-    const ownerIds = [...new Set(projects.map(p => p.ownerId).filter(Boolean))];
-    console.log('👥 Found owner IDs:', ownerIds);
+    console.log('Projects by owner fetched successfully:', data?.length || 0);
+    return data || [];
+  } catch (error) {
+    console.error('Error fetching projects by owner:', error);
+    throw error;
+  }
+};
 
-    // Fetch current display names for all owners
-    const displayNames = await getMultipleUserDisplayNames(ownerIds);
-    console.log('📝 Current display names:', Object.fromEntries(displayNames));
-
-    // Transform projects with current display names
-    const transformedProjects = projects.map(project => {
-      const currentDisplayName = displayNames.get(project.ownerId) || project.ownerDisplayName || 'Unknown User';
-      console.log(`🔄 Project "${project.title}" owner: ${project.ownerId} -> ${currentDisplayName}`);
-      
-      return {
-        ...project,
-        ownerDisplayName: currentDisplayName
+/**
+ * Create a new project (without storing ownerDisplayName)
+ */
+export const createProject = async (params: any): Promise<Project> => {
+  try {
+    console.log('Creating project with params:', params);
+    
+    // Handle different parameter structures
+    let projectData: CreateProjectData;
+    if (params.projectData && params.ownerId) {
+      // Frontend is passing { projectData: {...}, ownerId: ... }
+      projectData = {
+        ...params.projectData,
+        ownerId: params.ownerId
       };
-    });
-
-    return transformedProjects;
-  } catch (error) {
-    console.error('Error fetching projects:', error);
-    throw error;
-  }
-};
-
-/**
- * Fetch projects for a specific user (owner or team member) with current display names
- */
-export const getUserProjects = async (userId: string): Promise<Project[]> => {
-  try {
-    // First get all projects with current display names
-    const allProjects = await getProjects();
-    
-    // Filter for projects where user is owner or team member
-    const userProjects = allProjects.filter(project => 
-      project.ownerId === userId || 
-      (project.teamIds && project.teamIds.includes(userId))
-    );
-
-    return userProjects;
-  } catch (error) {
-    console.error('Error fetching user projects:', error);
-    throw error;
-  }
-};
-
-/**
- * Add a new project to Supabase
- */
-export const addProject = async (projectData: CreateProjectData): Promise<Project> => {
-  try {
-    const { data, error } = await supabase
-      .from('projects')
-      .insert([projectData])
-      .select()
-      .single();
-
-    if (error) {
-      throw new Error(`Failed to add project: ${error.message}`);
+    } else {
+      // Direct project data
+      projectData = params;
     }
-
-    return data;
-  } catch (error) {
-    console.error('Error adding project:', error);
-    throw error;
-  }
-};
-
-/**
- * Create a new project with owner and team setup
- */
-export const createProject = async (projectData: Omit<CreateProjectData, 'ownerId' | 'ownerDisplayName' | 'teamRoster' | 'teamIds'>, ownerId: string, ownerDisplayName: string): Promise<Project> => {
-  try {
-    const teamRoster = { [ownerId]: "Owner" };
-    const teamIds = [ownerId];
     
-    const fullProjectData: CreateProjectData = {
-      ...projectData,
-      ownerId,
-      ownerDisplayName,
-      teamRoster,
-      teamIds
-    };
-
+    console.log('Processed project data:', projectData);
+    
     const { data, error } = await supabase
-      .from('projects')
-      .insert([fullProjectData])
-      .select()
-      .single();
+      .rpc('create_project', {
+        project_data: {
+          project_title: projectData.title,
+          owner_id: projectData.ownerId,
+          project_description: projectData.description,
+          project_tags: projectData.tags,
+          project_team_roster: projectData.teamRoster || {},
+          project_team_ids: projectData.teamIds || [],
+          project_openings: projectData.openings || 0,
+          project_links: projectData.links || []
+        }
+      });
 
     if (error) {
+      console.error('Supabase error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
       throw new Error(`Failed to create project: ${error.message}`);
     }
 
-    return data;
+    if (!data || data.length === 0) {
+      throw new Error('Project creation failed - no data returned');
+    }
+
+    console.log('Project created successfully:', data[0]);
+    return data[0];
   } catch (error) {
     console.error('Error creating project:', error);
     throw error;
@@ -153,22 +173,45 @@ export const createProject = async (projectData: Omit<CreateProjectData, 'ownerI
 };
 
 /**
- * Update a project by ID
+ * Update project (direct database operation)
  */
-export const updateProject = async (id: string, updates: Partial<CreateProjectData>): Promise<Project> => {
+export const updateProject = async (projectId: string, updates: Partial<CreateProjectData>): Promise<Project> => {
   try {
+    console.log('Updating project:', { projectId, updates });
+    
     const { data, error } = await supabase
       .from('projects')
-      .update(updates)
-      .eq('id', id)
+      .update({
+        title: updates.title,
+        description: updates.description,
+        tags: updates.tags,
+        "teamRoster": updates.teamRoster,
+        "teamIds": updates.teamIds,
+        openings: updates.openings,
+        links: updates.links,
+        updated_at: new Date().toISOString()
+      })
+      .eq('id', projectId)
       .select()
       .single();
 
     if (error) {
+      console.error('Update error:', error);
       throw new Error(`Failed to update project: ${error.message}`);
     }
 
-    return data;
+    if (!data) {
+      throw new Error('Project not found or update failed');
+    }
+
+    // Get the updated project with current owner display name
+    const updatedProject = await getProjectById(projectId);
+    if (!updatedProject) {
+      throw new Error('Failed to fetch updated project');
+    }
+
+    console.log('Project updated successfully:', updatedProject);
+    return updatedProject;
   } catch (error) {
     console.error('Error updating project:', error);
     throw error;
@@ -176,36 +219,25 @@ export const updateProject = async (id: string, updates: Partial<CreateProjectDa
 };
 
 /**
- * Delete a project by ID
+ * Delete project
  */
-export const deleteProject = async (id: string): Promise<void> => {
+export const deleteProject = async (projectId: string): Promise<void> => {
   try {
+    console.log('Deleting project:', projectId);
+    
     const { error } = await supabase
       .from('projects')
       .delete()
-      .eq('id', id);
+      .eq('id', projectId);
 
     if (error) {
+      console.error('Delete error:', error);
       throw new Error(`Failed to delete project: ${error.message}`);
     }
+
+    console.log('Project deleted successfully');
   } catch (error) {
     console.error('Error deleting project:', error);
-    throw error;
-  }
-};
-
-/**
- * Fetch a single project by ID with current owner display name
- */
-export const getProjectById = async (id: string): Promise<Project | null> => {
-  try {
-    // Get all projects and find the one with matching ID
-    const allProjects = await getProjects();
-    const project = allProjects.find(p => p.id === id);
-    
-    return project || null;
-  } catch (error) {
-    console.error('Error fetching project by ID:', error);
     throw error;
   }
 };

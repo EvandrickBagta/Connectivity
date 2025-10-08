@@ -1,10 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getProjects, getUserProjects, addProject, createProject, updateProject, deleteProject, getProjectById } from '../services/projectService'
+import { getAllProjects, getProjectsByOwner, createProject, updateProject, deleteProject, getProjectById } from '../services/projectService'
 
 export const useProjects = () => {
   return useQuery({
     queryKey: ['projects'],
-    queryFn: getProjects,
+    queryFn: getAllProjects,
     staleTime: 5 * 60 * 1000, // 5 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
   })
@@ -23,7 +23,7 @@ export const useProjectById = (id) => {
 export const useUserProjects = (userId) => {
   return useQuery({
     queryKey: ['userProjects', userId],
-    queryFn: () => getUserProjects(userId),
+    queryFn: () => getProjectsByOwner(userId),
     enabled: !!userId,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
@@ -34,7 +34,7 @@ export const useAddProject = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: addProject,
+    mutationFn: createProject,
     onSuccess: () => {
       // Invalidate and refetch projects
       queryClient.invalidateQueries({ queryKey: ['projects'] })
@@ -46,7 +46,7 @@ export const useCreateProject = () => {
   const queryClient = useQueryClient()
   
   return useMutation({
-    mutationFn: ({ projectData, ownerId, ownerDisplayName }) => createProject(projectData, ownerId, ownerDisplayName),
+    mutationFn: createProject,
     onSuccess: () => {
       // Invalidate and refetch projects
       queryClient.invalidateQueries({ queryKey: ['projects'] })

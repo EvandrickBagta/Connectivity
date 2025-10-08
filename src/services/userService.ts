@@ -6,9 +6,11 @@ export interface User {
   display_name?: string;
   avatar_url?: string;
   contacts: string[];
-  interests: string[];
-  profile_icon?: string;
-  profile_description?: string;
+  interests: string[];  // User's activity interests
+  role?: 'Student' | 'Faculty' | 'Organization';  // User's role
+  seniority?: 'Freshman' | 'Sophomore' | 'Junior' | 'Senior';  // Academic level
+  skills_experience: string[];  // NEW: User's skills and experiences
+  involved_activities: string[];  // NEW: Activities user is involved in
   created_at: string;
   updated_at: string;
 }
@@ -19,67 +21,83 @@ export interface CreateUserData {
   display_name?: string;
   avatar_url?: string;
   contacts: string[];
-  interests: string[];
-  profile_icon?: string;
-  profile_description?: string;
+  interests: string[];  // User's activity interests
+  role?: 'Student' | 'Faculty' | 'Organization';  // User's role
+  seniority?: 'Freshman' | 'Sophomore' | 'Junior' | 'Senior';  // Academic level
+  skills_experience: string[];  // NEW: User's skills and experiences
+  involved_activities: string[];  // NEW: Activities user is involved in
 }
 
 /**
- * Get user profile by ID
+ * Get user profile by ID using standardized SQL function
  */
 export const getUserById = async (userId: string): Promise<User | null> => {
   try {
     console.log('Fetching user by ID:', userId);
     
-    // Check current auth status
-    const { data: { user: authUser } } = await supabase.auth.getUser();
-    console.log('Current Supabase auth user:', authUser);
-    
     const { data, error } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', userId)
-      .single();
+      .rpc('get_user_profile_enhanced', { user_id: userId });
 
     if (error) {
-      console.error('Supabase error details:', {
+      console.error('❌ Supabase error details:', {
         message: error.message,
         code: error.code,
         details: error.details,
-        hint: error.hint
+        hint: error.hint,
+        timestamp: new Date().toISOString(),
+        function: 'get_user_profile_enhanced'
       });
       
-      if (error.code === 'PGRST116') {
-        // No rows returned
-        console.log('No user found with ID:', userId);
-        return null;
-      }
-      throw new Error(`Failed to fetch user: ${error.message}`);
+      // Create detailed error message (without exposing user ID)
+      const detailedError = `Failed to fetch user profile. 
+Supabase error: ${error.message}. 
+Error code: ${error.code}. 
+This could be due to: 1) User doesn't exist in database, 2) RLS policy blocking access, 3) Database connection issue, 4) SQL function 'get_user_profile' not found. 
+Troubleshooting: 1) Check if user exists in database, 2) Verify get_user_profile function exists, 3) Review RLS policies in rls_policies.sql, 4) Check database connectivity, 5) Verify user ID format. 
+Function called: get_user_profile_enhanced, 
+Supabase error code: ${error.code}`;
+      
+      throw new Error(detailedError);
     }
 
-    console.log('User fetched successfully:', data);
-    return data;
+    if (!data || !data.success) {
+      console.log('⚠️ No user found in database or error in response:', data);
+      console.log('This could indicate: 1) User doesn\'t exist in database, 2) RLS policy blocking access, 3) User ID format issue');
+      return null;
+    }
+
+    console.log('User fetched successfully:', data.user);
+    return data.user;
   } catch (error) {
-    console.error('Error fetching user by ID:', error);
+    console.error('❌ Error fetching user by ID:', {
+      error: error.message,
+      stack: error.stack,
+      timestamp: new Date().toISOString(),
+      function: 'get_user_profile'
+    });
+    
+    // Re-throw with additional context if it's not already a detailed error
+    if (!error.message.includes('Failed to fetch user profile')) {
+      const enhancedError = new Error(`getUserById failed. 
+Original error: ${error.message}. 
+This affects profile loading functionality. 
+Check: 1) Database connection, 2) SQL function exists, 3) User authentication, 4) RLS policies. 
+Function: getUserById`);
+      enhancedError.stack = error.stack;
+      throw enhancedError;
+    }
+    
     throw error;
   }
 };
 
 /**
- * Create a new user profile using the bypass function
+ * Create a new user profile using standardized SQL function
  */
 export const createUser = async (userData: CreateUserData): Promise<User> => {
   try {
     console.log('Creating user with data:', userData);
     
-    // First check if user already exists
-    const existingUser = await getUserById(userData.id);
-    if (existingUser) {
-      console.log('⚠️ User already exists, updating instead of creating:', existingUser);
-      return await updateUser(userData.id, userData);
-    }
-    
-    // Use the bypass function instead of direct table insert
     const { data, error } = await supabase
       .rpc('create_user_profile', {
         user_id: userData.id,
@@ -87,9 +105,9 @@ export const createUser = async (userData: CreateUserData): Promise<User> => {
         user_email: userData.email,
         user_avatar_url: userData.avatar_url,
         user_contacts: userData.contacts,
-        user_interests: userData.interests,
-        user_profile_icon: userData.profile_icon,
-        user_profile_description: userData.profile_description
+        user_interests: userData.interests || [],
+        user_role: userData.role,
+        user_seniority: userData.seniority
       });
 
     if (error) {
@@ -118,13 +136,12 @@ export const createUser = async (userData: CreateUserData): Promise<User> => {
 };
 
 /**
- * Update user profile using bypass function
+ * Update user profile using standardized SQL function
  */
 export const updateUser = async (userId: string, updates: Partial<CreateUserData>): Promise<User> => {
   try {
-    console.log('🔄 Updating user profile with bypass function:', { userId, updates });
+    console.log('🔄 Updating user profile:', { userId, updates });
     
-    // Use the bypass function to update user profile
     const { data, error } = await supabase
       .rpc('update_user_profile', {
         user_id: userId,
@@ -133,12 +150,12 @@ export const updateUser = async (userId: string, updates: Partial<CreateUserData
         user_avatar_url: updates.avatar_url,
         user_contacts: updates.contacts,
         user_interests: updates.interests,
-        user_profile_icon: updates.profile_icon,
-        user_profile_description: updates.profile_description
+        user_role: updates.role,
+        user_seniority: updates.seniority
       });
 
     if (error) {
-      console.error('❌ Bypass function error, falling back to direct update:', error);
+      console.error('❌ Update error:', error);
       console.error('❌ Error details:', {
         message: error.message,
         code: error.code,
@@ -146,21 +163,13 @@ export const updateUser = async (userId: string, updates: Partial<CreateUserData
         hint: error.hint
       });
       
-      // Fallback to direct update if bypass function doesn't exist
-      const { data: fallbackData, error: fallbackError } = await supabase
-        .from('users')
-        .update({ ...updates, updated_at: new Date().toISOString() })
-        .eq('id', userId)
-        .select()
-        .single();
-
-      if (fallbackError) {
-        console.error('❌ Fallback update also failed:', fallbackError);
-        throw new Error(`Failed to update user: ${fallbackError.message}`);
+      // If user doesn't exist, create them instead
+      if (error.message.includes('not found')) {
+        console.log('🔄 User not found, creating new user instead of updating');
+        return await createUser({ id: userId, ...updates });
       }
-
-      console.log('✅ Fallback update successful:', fallbackData);
-      return fallbackData;
+      
+      throw new Error(`Failed to update user: ${error.message}`);
     }
 
     if (!data) {
@@ -171,6 +180,50 @@ export const updateUser = async (userId: string, updates: Partial<CreateUserData
     return data;
   } catch (error) {
     console.error('Error updating user:', error);
+    throw error;
+  }
+};
+
+/**
+ * Upsert user profile (create or update) using standardized SQL function
+ * This is the recommended function to use for user profile management
+ */
+export const upsertUser = async (userData: CreateUserData): Promise<User> => {
+  try {
+    console.log('🔄 Upserting user profile:', userData);
+    
+    const { data, error } = await supabase
+      .rpc('upsert_user_profile', {
+        user_id: userData.id,
+        user_display_name: userData.display_name,
+        user_email: userData.email,
+        user_avatar_url: userData.avatar_url,
+        user_contacts: userData.contacts,
+        user_interests: userData.interests || [],
+        user_role: userData.role,
+        user_seniority: userData.seniority
+      });
+
+    if (error) {
+      console.error('❌ Upsert error:', error);
+      console.error('❌ Error details:', {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      
+      throw new Error(`Failed to upsert user: ${error.message}`);
+    }
+
+    if (!data) {
+      throw new Error('Upsert operation failed');
+    }
+
+    console.log('✅ User profile upserted successfully:', data);
+    return data;
+  } catch (error) {
+    console.error('Error upserting user:', error);
     throw error;
   }
 };

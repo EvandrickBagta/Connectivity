@@ -131,6 +131,7 @@ export const UserProvider = ({ children }) => {
 
   const value = {
     userProfile,
+    setUserProfile,
     isLoading,
     error,
     refreshUserProfile,
