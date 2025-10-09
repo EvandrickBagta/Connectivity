@@ -2,23 +2,71 @@ import React, { useState, useEffect } from 'react'
 import FeedPanel from '../components/FeedPanel'
 import DetailsPanel from '../components/DetailsPanel'
 import AddProjectModal from '../components/AddProjectModal'
+import RecentlyViewedBar from '../components/RecentlyViewedBar'
 import { supabase } from '../lib/supabaseClient'
+import { useRecentlyViewed } from '../hooks/useRecentlyViewed'
+import { useSavedActivities } from '../hooks/useSavedActivities'
+import { useProjectById } from '../hooks/useProjects'
 
 // Main Explore component
-const Explore = ({ onNavigateToLanding }) => {
+const Explore = ({ onNavigateToLanding, onNavigateToActivity, origin = 'explore', isActive = true }) => {
   const [selectedPostId, setSelectedPostId] = useState(null)
   const [showDetails, setShowDetails] = useState(false)
   const [showAddModal, setShowAddModal] = useState(false)
+  
+  // Recently viewed hook
+  const { recentActivities, addToRecent, clearRecent } = useRecentlyViewed()
+  
+  // Saved activities hook
+  const { savedActivities, addToSaved, removeFromSaved, clearSaved, isSaved } = useSavedActivities()
 
-  // Initialize selected activity from URL on component mount
+  // Initialize selected activity from URL on component mount AND when URL changes
   useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search)
-    const activityId = urlParams.get('activity')
-    if (activityId) {
-      setSelectedPostId(activityId)
-      setShowDetails(true)
+    const checkUrlForActivity = () => {
+      const urlParams = new URLSearchParams(window.location.search)
+      const activityId = urlParams.get('activity')
+      
+      if (activityId && activityId !== selectedPostId) {
+        console.log('📌 Restoring selected activity from URL:', activityId)
+        setSelectedPostId(activityId)
+        setShowDetails(true)
+      } else if (!activityId && selectedPostId) {
+        // URL doesn't have activity param but we have one selected
+        // This can happen when navigating to other tabs
+        console.log('📌 Clearing selection (no activity in URL)')
+      }
     }
-  }, [])
+    
+    // Check on mount
+    checkUrlForActivity()
+    
+    // Listen for URL changes (when coming back from activity page or using browser navigation)
+    const handlePopState = () => {
+      console.log('📌 URL changed, checking for activity parameter')
+      checkUrlForActivity()
+    }
+    
+    window.addEventListener('popstate', handlePopState)
+    return () => window.removeEventListener('popstate', handlePopState)
+  }, [selectedPostId])
+
+  // Check URL when component becomes active (tab switches back to explore)
+  // Only restore from URL if we have an activity parameter
+  // Otherwise preserve the current selection (for tab switching within Home)
+  useEffect(() => {
+    if (isActive) {
+      const urlParams = new URLSearchParams(window.location.search)
+      const activityId = urlParams.get('activity')
+      
+      if (activityId && activityId !== selectedPostId) {
+        console.log('📌 Restoring selected activity from URL:', activityId)
+        setSelectedPostId(activityId)
+        setShowDetails(true)
+      }
+      // Don't clear selection if URL doesn't have activity param
+      // This preserves selection when switching between Home tabs
+    }
+  }, [isActive])
 
   // Test Supabase connection
   useEffect(() => {
@@ -42,13 +90,14 @@ const Explore = ({ onNavigateToLanding }) => {
 
   // Handle post selection
   const handleSelectPost = (postId) => {
+    console.log('📌 Selecting activity:', postId)
     setSelectedPostId(postId)
     setShowDetails(true)
     
     // Update URL to remember selected activity
     const url = new URL(window.location)
     url.searchParams.set('activity', postId)
-    window.history.pushState({}, '', url)
+    window.history.replaceState({}, '', url) // Use replaceState to not clutter history
   }
 
   // Handle back to feed (mobile)
@@ -62,6 +111,18 @@ const Explore = ({ onNavigateToLanding }) => {
     window.history.pushState({}, '', url)
   }
 
+  // Handle selecting a recent activity
+  const handleSelectRecent = (activityId) => {
+    console.log('📚 Selecting from recent:', activityId)
+    handleSelectPost(activityId)
+  }
+
+  // Handle selecting a saved activity
+  const handleSelectSaved = (activityId) => {
+    console.log('💾 Selecting from saved:', activityId)
+    handleSelectPost(activityId)
+  }
+
   // Handle apply to project
   const handleApply = async (project) => {
     // Simulate API call
@@ -73,14 +134,20 @@ const Explore = ({ onNavigateToLanding }) => {
   const handleSave = async (project) => {
     // Simulate API call
     await new Promise(resolve => setTimeout(resolve, 500))
-    console.log('Saved project:', project.title)
+    
+    if (isSaved(project.id)) {
+      removeFromSaved(project.id)
+      console.log('Removed from saved:', project.title)
+    } else {
+      addToSaved(project)
+      console.log('Added to saved:', project.title)
+    }
   }
 
-  // Handle comment
-  const handleComment = (project) => {
-    console.log('Comment on project:', project.title)
-    // In a real app, this would open a comment modal or navigate to project details
-  }
+  // Handle share (no longer needed as it's handled in PostDetail)
+  // const handleShare = (project) => {
+  //   console.log('Share project:', project.title)
+  // }
 
   return (
     <div className="h-screen flex flex-col">
@@ -93,6 +160,14 @@ const Explore = ({ onNavigateToLanding }) => {
             <FeedPanel 
               onSelectPost={handleSelectPost}
               onAddProject={() => setShowAddModal(true)}
+              onNavigateToActivity={onNavigateToActivity}
+              origin={origin}
+              recentActivities={recentActivities}
+              onSelectRecent={handleSelectRecent}
+              onClearRecent={clearRecent}
+              savedActivities={savedActivities}
+              onSelectSaved={handleSelectSaved}
+              onClearSaved={clearSaved}
             />
           </div>
           
@@ -103,7 +178,10 @@ const Explore = ({ onNavigateToLanding }) => {
               onBack={handleBackToFeed}
               onApply={handleApply}
               onSave={handleSave}
-              onComment={handleComment}
+              onNavigateToActivity={onNavigateToActivity}
+              origin={origin}
+              onAddToRecent={addToRecent}
+              isSaved={selectedPostId ? isSaved(selectedPostId) : false}
             />
           </div>
         </div>
@@ -115,6 +193,14 @@ const Explore = ({ onNavigateToLanding }) => {
             <FeedPanel 
               onSelectPost={handleSelectPost}
               onAddProject={() => setShowAddModal(true)}
+              onNavigateToActivity={onNavigateToActivity}
+              origin={origin}
+              recentActivities={recentActivities}
+              onSelectRecent={handleSelectRecent}
+              onClearRecent={clearRecent}
+              savedActivities={savedActivities}
+              onSelectSaved={handleSelectSaved}
+              onClearSaved={clearSaved}
             />
           </div>
           
@@ -125,7 +211,10 @@ const Explore = ({ onNavigateToLanding }) => {
               onBack={handleBackToFeed}
               onApply={handleApply}
               onSave={handleSave}
-              onComment={handleComment}
+              onNavigateToActivity={onNavigateToActivity}
+              origin={origin}
+              onAddToRecent={addToRecent}
+              isSaved={selectedPostId ? isSaved(selectedPostId) : false}
             />
           </div>
         </div>
@@ -136,6 +225,11 @@ const Explore = ({ onNavigateToLanding }) => {
           <FeedPanel 
             onSelectPost={handleSelectPost}
             onAddProject={() => setShowAddModal(true)}
+            onNavigateToActivity={onNavigateToActivity}
+            origin={origin}
+            recentActivities={recentActivities}
+            onSelectRecent={handleSelectRecent}
+            onClearRecent={clearRecent}
           />
           
           {/* Drawer for Details */}
@@ -154,8 +248,11 @@ const Explore = ({ onNavigateToLanding }) => {
                   onBack={handleBackToFeed}
                   onApply={handleApply}
                   onSave={handleSave}
-                  onComment={handleComment}
                   isDrawer={true}
+                  onNavigateToActivity={onNavigateToActivity}
+                  origin={origin}
+                  onAddToRecent={addToRecent}
+              isSaved={selectedPostId ? isSaved(selectedPostId) : false}
                 />
               </div>
             </>

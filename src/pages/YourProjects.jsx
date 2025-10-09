@@ -7,7 +7,7 @@ import ActivityEditor from '../components/ActivityEditor'
 import AddProjectModal from '../components/AddProjectModal'
 
 // Main YourProjects component
-const YourProjects = () => {
+const YourProjects = ({ onNavigateToActivity, origin = 'your-activities' }) => {
   const { user } = useUser()
   const [search, setSearch] = useState('')
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -193,7 +193,7 @@ const YourProjects = () => {
                   </p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
                   {filteredProjects.map(project => (
                     <PostCard
                       key={project.id}
@@ -201,6 +201,10 @@ const YourProjects = () => {
                       currentUserId={user?.id}
                       onDelete={handleDeleteClick}
                       onEdit={handleEditClick}
+                      onNavigateToActivity={onNavigateToActivity}
+                      origin={origin}
+                      showEditButton={true}
+                      showViewButton={true}
                     />
                   ))}
                 </div>

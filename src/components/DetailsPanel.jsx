@@ -1,7 +1,7 @@
 import React from 'react'
 import PostDetail from './PostDetail'
 
-const DetailsPanel = ({ selectedPostId, onBack, onApply, onSave, onComment, isDrawer = false }) => {
+const DetailsPanel = ({ selectedPostId, onBack, onApply, onSave, isDrawer = false, onNavigateToActivity, origin = 'explore', onAddToRecent, isSaved = false }) => {
   if (!selectedPostId) {
     return (
       <div className="h-full flex items-center justify-center p-6">
@@ -54,8 +54,11 @@ const DetailsPanel = ({ selectedPostId, onBack, onApply, onSave, onComment, isDr
         onBack={onBack}
         onApply={onApply}
         onSave={onSave}
-        onComment={onComment}
         isDrawer={isDrawer}
+        onNavigateToActivity={onNavigateToActivity}
+        origin={origin}
+        onAddToRecent={onAddToRecent}
+        isSaved={isSaved}
       />
     </div>
   )

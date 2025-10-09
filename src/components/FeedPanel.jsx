@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useProjects } from '../hooks/useProjects'
+import { useProjects, useSearchProjectsByTags } from '../hooks/useProjects'
 import PostCard from './PostCard'
+import RecentlyViewedBar from './RecentlyViewedBar'
 import { useUser } from '@clerk/clerk-react'
 
 // Debounce hook
@@ -60,7 +61,7 @@ const SkeletonCard = () => (
   </div>
 )
 
-const FeedPanel = ({ onSelectPost, onAddProject }) => {
+const FeedPanel = ({ onSelectPost, onAddProject, onNavigateToActivity, origin = 'explore', recentActivities, onSelectRecent, onClearRecent, savedActivities, onSelectSaved, onClearSaved }) => {
   const [search, setSearch] = useState('')
   const [showTagFilter, setShowTagFilter] = useState(false)
   const { user } = useUser()
@@ -73,20 +74,58 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
     error
   } = useProjects()
 
+  // Extract potential tags from search query
+  const extractTagsFromSearch = (searchQuery) => {
+    if (!searchQuery) return []
+    
+    // Look for hashtag patterns (#tag) or comma-separated tags
+    const hashtagMatches = searchQuery.match(/#[\w-]+/g)
+    const commaSeparated = searchQuery.split(',').map(tag => tag.trim()).filter(tag => tag.length > 0)
+    
+    let tags = []
+    
+    if (hashtagMatches) {
+      tags = hashtagMatches.map(tag => tag.substring(1)) // Remove # prefix
+    } else if (commaSeparated.length > 1) {
+      tags = commaSeparated
+    }
+    
+    return tags
+  }
+
+  // Check if search query contains tag patterns
+  const searchTags = extractTagsFromSearch(debouncedSearch)
+  const isTagSearch = searchTags.length > 0
+
+  // Use tag search if tags are detected, otherwise use regular search
+  const {
+    data: tagSearchResults,
+    isLoading: isTagSearchLoading,
+    error: tagSearchError
+  } = useSearchProjectsByTags(searchTags)
+
   // Handle post selection
   const handlePostClick = (project) => {
     onSelectPost(project.id)
   }
 
   // Filter projects based on search
-  const filteredProjects = projects?.filter(project => {
-    if (!debouncedSearch) return true
-    const searchLower = debouncedSearch.toLowerCase()
-    return (
-      project.title.toLowerCase().includes(searchLower) ||
-      (project.description && project.description.toLowerCase().includes(searchLower))
-    )
-  }) || []
+  const filteredProjects = (() => {
+    if (!debouncedSearch) return projects || []
+    
+    if (isTagSearch) {
+      // Use tag search results
+      return tagSearchResults || []
+    } else {
+      // Use regular text search
+      const searchLower = debouncedSearch.toLowerCase()
+      return projects?.filter(project => (
+        project.title.toLowerCase().includes(searchLower) ||
+        (project.description && project.description.toLowerCase().includes(searchLower)) ||
+        (project.tags && project.tags.some(tag => tag.toLowerCase().includes(searchLower)))
+      )) || []
+    }
+  })()
 
   return (
     <div className="h-full flex flex-col bg-slate-50">
@@ -101,7 +140,7 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Search activities..."
+                placeholder="Search activities, tags (#react, #python), or descriptions..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
@@ -112,6 +151,23 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
                 </svg>
               </div>
             </div>
+            
+            {/* Tag Search Indicator */}
+            {isTagSearch && (
+              <div className="mt-2 flex items-center space-x-2">
+                <span className="text-sm text-indigo-600 font-medium">Searching by tags:</span>
+                <div className="flex flex-wrap gap-1">
+                  {searchTags.map((tag, index) => (
+                    <span
+                      key={index}
+                      className="px-2 py-1 bg-indigo-100 text-indigo-700 text-xs rounded-full"
+                    >
+                      #{tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
           
           {/* Add Project Button */}
@@ -127,10 +183,20 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
         </div>
       </div>
 
+      {/* Recently Viewed Bar */}
+      <RecentlyViewedBar 
+        recentActivities={recentActivities}
+        onSelectActivity={onSelectRecent}
+        onClear={onClearRecent}
+        savedActivities={savedActivities}
+        onSelectSaved={onSelectSaved}
+        onClearSaved={onClearSaved}
+      />
+
       {/* Feed Content */}
       <div className="flex-1 overflow-y-auto p-4 lg:p-6 bg-slate-50">
         {/* Loading State */}
-        {isLoading && (
+        {(isLoading || isTagSearchLoading) && (
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             {[...Array(6)].map((_, i) => (
               <SkeletonCard key={i} />
@@ -139,7 +205,7 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
         )}
 
         {/* Error State */}
-        {error && (
+        {(error || tagSearchError) && (
           <div className="text-center py-12">
             <div className="text-red-600 mb-4">
               <svg className="mx-auto h-12 w-12" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -152,7 +218,7 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
         )}
 
         {/* Projects List */}
-        {!isLoading && !error && (
+        {!isLoading && !error && !isTagSearchLoading && !tagSearchError && (
           <>
             {filteredProjects.length === 0 ? (
               <div className="text-center py-12">
@@ -175,6 +241,8 @@ const FeedPanel = ({ onSelectPost, onAddProject }) => {
                     <PostCard
                       project={project}
                       currentUserId={user?.id}
+                      onNavigateToActivity={onNavigateToActivity}
+                      origin={origin}
                     />
                   </div>
                 ))}

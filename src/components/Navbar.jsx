@@ -1,7 +1,7 @@
 import React from 'react'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 
-const Navbar = ({ currentPage, onNavigateToLanding, onNavigateToExplore, onNavigateToProfile, onNavigateToYourProjects }) => {
+const Navbar = ({ currentPage, onNavigateToLanding, onNavigateToHome }) => {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -21,37 +21,17 @@ const Navbar = ({ currentPage, onNavigateToLanding, onNavigateToExplore, onNavig
                   : 'text-gray-600 hover:text-gray-900'
               }`}
             >
+              About
+            </button>
+            <button 
+              onClick={onNavigateToHome}
+              className={`px-3 py-2 text-sm font-medium relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 after:h-px after:bg-gray-200 hover:after:w-full hover:after:bg-gray-400 after:transition-all after:duration-300 hover:scale-105 ${
+                currentPage === 'home' 
+                  ? 'text-gray-900 after:w-full after:bg-gray-400' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
               Home
-            </button>
-            <button 
-              onClick={onNavigateToExplore}
-              className={`px-3 py-2 text-sm font-medium relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 after:h-px after:bg-gray-200 hover:after:w-full hover:after:bg-gray-400 after:transition-all after:duration-300 hover:scale-105 ${
-                currentPage === 'explore' 
-                  ? 'text-gray-900 after:w-full after:bg-gray-400' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Explore Activities
-            </button>
-            <button 
-              onClick={onNavigateToYourProjects}
-              className={`px-3 py-2 text-sm font-medium relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 after:h-px after:bg-gray-200 hover:after:w-full hover:after:bg-gray-400 after:transition-all after:duration-300 hover:scale-105 ${
-                currentPage === 'your-projects' 
-                  ? 'text-gray-900 after:w-full after:bg-gray-400' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Your Activities
-            </button>
-            <button 
-              onClick={onNavigateToProfile}
-              className={`px-3 py-2 text-sm font-medium relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 after:h-px after:bg-gray-200 hover:after:w-full hover:after:bg-gray-400 after:transition-all after:duration-300 hover:scale-105 ${
-                currentPage === 'profile' 
-                  ? 'text-gray-900 after:w-full after:bg-gray-400' 
-                  : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Profile
             </button>
           </nav>
           

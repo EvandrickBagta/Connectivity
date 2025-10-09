@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { getAllProjects, getProjectsByOwner, createProject, updateProject, deleteProject, getProjectById } from '../services/projectService'
+import { getAllProjects, getProjectsByOwner, createProject, updateProject, deleteProject, getProjectById, searchProjectsByTags } from '../services/projectService'
 
 export const useProjects = () => {
   return useQuery({
@@ -67,6 +67,16 @@ export const useUpdateProject = () => {
       // Also invalidate any specific project queries
       queryClient.invalidateQueries({ queryKey: ['project'] })
     },
+  })
+}
+
+export const useSearchProjectsByTags = (tags) => {
+  return useQuery({
+    queryKey: ['projects', 'search', 'tags', tags],
+    queryFn: () => searchProjectsByTags(tags),
+    enabled: tags && tags.length > 0,
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
   })
 }
 

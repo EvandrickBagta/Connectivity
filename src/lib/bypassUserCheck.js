@@ -52,7 +52,7 @@ const fallbackUserCheck = async (userId) => {
     
     const { data, error } = await supabase
       .from('users')
-      .select('id, display_name, email, avatar_url, contacts, created_at, updated_at')
+      .select('id, display_name, email, avatar_url, contacts, created_at')
       .eq('id', userId)
       .maybeSingle();
 

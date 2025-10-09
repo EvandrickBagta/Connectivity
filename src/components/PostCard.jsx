@@ -1,6 +1,6 @@
 import React from 'react'
 
-const PostCard = ({ project, currentUserId, onDelete, onEdit }) => {
+const PostCard = ({ project, currentUserId, onDelete, onEdit, onNavigateToActivity, origin = 'explore', showEditButton = false, showViewButton = false }) => {
   // Use the ownerDisplayName directly from the project data
   const ownerDisplayName = project.ownerDisplayName || 'Unknown User'
 
@@ -48,27 +48,85 @@ const PostCard = ({ project, currentUserId, onDelete, onEdit }) => {
   const teamSize = project.teamIds?.length || teamRosterArray?.length || 0
 
   const handleCardClick = () => {
-    if (isOwner && onEdit) {
+    // If onNavigateToActivity is available, navigate to full page
+    if (onNavigateToActivity) {
+      onNavigateToActivity(project.id, origin)
+    }
+  }
+
+  const handleEditClick = (e) => {
+    e.stopPropagation()
+    if (onEdit) {
       onEdit(project)
     }
   }
 
   return (
-    <div 
-      className={`bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden h-full flex flex-col ${
-        isOwner && onEdit ? 'cursor-pointer' : ''
-      }`}
-      style={{
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)'
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-      }}
-      onClick={handleCardClick}
-    >
+    <div className="relative">
+      <div 
+        className="bg-white rounded-xl shadow-lg hover:shadow-2xl transition-all duration-300 hover:-translate-y-1 overflow-hidden h-full flex flex-col cursor-pointer"
+        style={{
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -2px rgba(0, 0, 0, 0.1)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
+        }}
+        onClick={handleCardClick}
+      >
+      {/* Action buttons overlay */}
+      {((onNavigateToActivity && showViewButton) || (isOwner && onEdit && showEditButton) || (isOwner && onDelete)) && (
+        <div className="absolute top-3 right-3 z-10 flex flex-col gap-1 p-2 bg-gray-800/90 backdrop-blur-sm rounded-lg shadow-lg">
+          {/* View Button */}
+          {onNavigateToActivity && showViewButton && (
+            <button
+              onClick={handleCardClick}
+              className="flex items-center space-x-1 px-2 py-1 bg-white text-green-600 hover:text-green-800 hover:bg-green-50 rounded-md transition-colors text-sm"
+              title="View activity"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+              <span>View</span>
+            </button>
+          )}
+          
+          {/* Edit Button for Owners */}
+          {isOwner && onEdit && showEditButton && (
+            <button
+              onClick={handleEditClick}
+              className="flex items-center space-x-1 px-2 py-1 bg-white text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded-md transition-colors text-sm"
+              title="Edit activity"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+              <span>Edit</span>
+            </button>
+          )}
+          
+          {/* Delete Button for Owners */}
+          {isOwner && onDelete && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onDelete(project);
+              }}
+              className="flex items-center space-x-1 px-2 py-1 bg-white text-red-600 hover:text-red-800 hover:bg-red-50 rounded-md transition-colors text-sm"
+              title="Delete activity"
+            >
+              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              </svg>
+              <span>Delete</span>
+            </button>
+          )}
+        </div>
+      )}
+
       {/* Header */}
       <div className="p-6 pb-4 flex-grow">
         <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4">
@@ -133,21 +191,6 @@ const PostCard = ({ project, currentUserId, onDelete, onEdit }) => {
               )}
             </div>
             
-            {/* Delete Button for Owners */}
-            {isOwner && onDelete && (
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onDelete(project);
-                }}
-                className="text-red-600 hover:text-red-800 hover:bg-red-50 p-2 rounded-full transition-colors"
-                title="Delete activity"
-              >
-                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-              </button>
-            )}
           </div>
         )}
       </div>
@@ -167,6 +210,7 @@ const PostCard = ({ project, currentUserId, onDelete, onEdit }) => {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

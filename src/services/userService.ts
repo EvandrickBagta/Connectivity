@@ -5,6 +5,7 @@ export interface User {
   email?: string;
   display_name?: string;
   avatar_url?: string;
+  bio?: string;  // NEW: User's bio/description
   contacts: string[];
   interests: string[];  // User's activity interests
   role?: 'Student' | 'Faculty' | 'Organization';  // User's role
@@ -12,7 +13,6 @@ export interface User {
   skills_experience: string[];  // NEW: User's skills and experiences
   involved_activities: string[];  // NEW: Activities user is involved in
   created_at: string;
-  updated_at: string;
 }
 
 export interface CreateUserData {
@@ -20,6 +20,7 @@ export interface CreateUserData {
   email?: string;
   display_name?: string;
   avatar_url?: string;
+  bio?: string;  // NEW: User's bio/description
   contacts: string[];
   interests: string[];  // User's activity interests
   role?: 'Student' | 'Faculty' | 'Organization';  // User's role
@@ -104,6 +105,7 @@ export const createUser = async (userData: CreateUserData): Promise<User> => {
         user_display_name: userData.display_name,
         user_email: userData.email,
         user_avatar_url: userData.avatar_url,
+        user_bio: userData.bio,  // NEW: Added bio field
         user_contacts: userData.contacts,
         user_interests: userData.interests || [],
         user_role: userData.role,
@@ -148,10 +150,13 @@ export const updateUser = async (userId: string, updates: Partial<CreateUserData
         user_display_name: updates.display_name,
         user_email: updates.email,
         user_avatar_url: updates.avatar_url,
+        user_bio: updates.bio,  // NEW: Added bio field
         user_contacts: updates.contacts,
         user_interests: updates.interests,
         user_role: updates.role,
-        user_seniority: updates.seniority
+        user_seniority: updates.seniority,
+        user_skills_experience: updates.skills_experience  // Added - requires running add_skills_to_update_function.sql
+        // Note: involved_activities is NOT included - it's auto-managed by database triggers
       });
 
     if (error) {
@@ -198,6 +203,7 @@ export const upsertUser = async (userData: CreateUserData): Promise<User> => {
         user_display_name: userData.display_name,
         user_email: userData.email,
         user_avatar_url: userData.avatar_url,
+        user_bio: userData.bio,  // NEW: Added bio field
         user_contacts: userData.contacts,
         user_interests: userData.interests || [],
         user_role: userData.role,

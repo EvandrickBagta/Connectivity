@@ -1,15 +1,23 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useProjectById, useDeleteProject, useUpdateProject } from '../hooks/useProjects'
 import { useUser } from '@clerk/clerk-react'
 import TeamMemberCard from './TeamMemberCard'
 import DeleteConfirmationModal from './DeleteConfirmationModal'
 import ActivityEditor from './ActivityEditor'
+import { removeUserFromProjectTeam } from '../services/projectService'
 
-const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = false }) => {
+const PostDetail = ({ postId, onBack, onApply, onSave, isDrawer = false, onNavigateToActivity, origin = 'explore', onAddToRecent, isSaved: initialIsSaved = false }) => {
   const [isApplied, setIsApplied] = useState(false)
-  const [isSaved, setIsSaved] = useState(false)
+  const [isSaved, setIsSaved] = useState(initialIsSaved)
   const [isApplying, setIsApplying] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [isLeaving, setIsLeaving] = useState(false)
+  const [teamError, setTeamError] = useState(null)
+  
+  // Sync saved state when prop changes
+  useEffect(() => {
+    setIsSaved(initialIsSaved)
+  }, [initialIsSaved])
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false)
   const [isDescriptionExpanded, setIsDescriptionExpanded] = useState(false)
@@ -18,6 +26,28 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
   const { data: project, isLoading, error } = useProjectById(postId)
   const deleteProjectMutation = useDeleteProject()
   const updateProjectMutation = useUpdateProject()
+
+  // Debug logging for team membership
+  useEffect(() => {
+    if (project && user?.id) {
+      const teamRosterKeys = project.teamRoster ? Object.keys(project.teamRoster) : []
+      const isInTeamRoster = teamRosterKeys.includes(user.id)
+      const isOwner = project.ownerId === user.id
+      
+      console.log('PostDetail team membership debug:', {
+        projectId: project.id,
+        currentUserId: user.id,
+        projectOwnerId: project.ownerId,
+        projectTeamIds: project.teamIds,
+        projectTeamRoster: project.teamRoster,
+        teamRosterKeys: teamRosterKeys,
+        isOwner: isOwner,
+        isInTeamRoster: isInTeamRoster,
+        shouldShowLeaveButton: isInTeamRoster && !isOwner,
+        teamRosterLength: teamRosterKeys.length
+      })
+    }
+  }, [project, user?.id])
 
   const handleApply = async () => {
     if (isApplied || isApplying || !project) return
@@ -47,9 +77,63 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
     }
   }
 
-  const handleComment = () => {
+  // Robust team membership check
+  const isTeamMember = () => {
+    if (!project || !user?.id) return false
+    
+    // Check if user is the owner
+    if (project.ownerId === user.id) return true
+    
+    // Check if user is in teamIds array
+    if (project.teamIds && Array.isArray(project.teamIds) && project.teamIds.includes(user.id)) {
+      return true
+    }
+    
+    // Check if user is in teamRoster object keys
+    if (project.teamRoster && typeof project.teamRoster === 'object' && Object.keys(project.teamRoster).includes(user.id)) {
+      return true
+    }
+    
+    return false
+  }
+
+  const isProjectOwner = () => {
+    return project && user?.id && project.ownerId === user.id
+  }
+
+  const handleLeaveTeam = async () => {
+    if (!project || !user?.id || isLeaving) return
+    
+    setIsLeaving(true)
+    setTeamError(null)
+    
+    try {
+      const result = await removeUserFromProjectTeam(project.id, user.id)
+      
+      if (result.success) {
+        // Refresh the project data to update team status
+        window.location.reload()
+      } else {
+        setTeamError(result.error || 'Failed to leave team')
+      }
+    } catch (error) {
+      setTeamError('Failed to leave team')
+      console.error('Error leaving team:', error)
+    } finally {
+      setIsLeaving(false)
+    }
+  }
+
+  const handleShare = () => {
     if (project) {
-      onComment(project)
+      // Copy project URL to clipboard
+      const url = `${window.location.origin}${window.location.pathname}?activity=${project.id}`
+      navigator.clipboard.writeText(url).then(() => {
+        // You could show a toast notification here
+        console.log('Project URL copied to clipboard:', url)
+      }).catch(err => {
+        console.error('Failed to copy URL:', err)
+      })
     }
   }
 
@@ -281,22 +365,26 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
             <h1 className="text-3xl font-bold text-gray-900 mb-4">{project.title}</h1>
 
             {/* Action Buttons - Responsive Layout */}
-            {/* Large screens: Apply first, Save+Comment together */}
+            {/* Large screens: View Full Page first, Save+Comment together */}
             <div className="hidden lg:flex flex-wrap gap-2">
-              {/* Apply to Activity - Always first row */}
-              <button
-                onClick={handleApply}
-                disabled={isApplied || isApplying}
-                className={`whitespace-nowrap flex-shrink-0 min-w-max px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isApplied 
-                    ? 'bg-green-100 text-green-700 cursor-not-allowed' 
-                    : isApplying
-                    ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                }`}
-              >
-                {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply to Activity'}
-              </button>
+              {/* View Full Page Button - Primary action */}
+              {onNavigateToActivity && (
+                <button
+                  onClick={() => {
+                    // Track this activity in recently viewed
+                    if (onAddToRecent) {
+                      onAddToRecent(project)
+                    }
+                    onNavigateToActivity(project.id, origin)
+                  }}
+                  className="whitespace-nowrap flex-shrink-0 min-w-max px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center gap-2"
+                >
+                  View Full Page
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </button>
+              )}
               
               {/* Save and Comment - Always together */}
               <div className="flex gap-2">
@@ -313,30 +401,34 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
                 </button>
                 
                 <button
-                  onClick={handleComment}
+                  onClick={handleShare}
                   className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
                 >
-                  Comment
+                  Share
                 </button>
               </div>
             </div>
 
             {/* Small screens: Stacked layout */}
             <div className="lg:hidden space-y-2">
-              {/* Row 1: Apply to Activity */}
-              <button
-                onClick={handleApply}
-                disabled={isApplied || isApplying}
-                className={`w-full whitespace-nowrap flex-shrink-0 min-w-max px-4 py-2 rounded-lg font-medium transition-colors ${
-                  isApplied 
-                    ? 'bg-green-100 text-green-700 cursor-not-allowed' 
-                    : isApplying
-                    ? 'bg-indigo-100 text-indigo-700 cursor-not-allowed'
-                    : 'bg-indigo-600 hover:bg-indigo-700 text-white'
-                }`}
-              >
-                {isApplying ? 'Applying...' : isApplied ? 'Applied' : 'Apply to Activity'}
-              </button>
+              {/* Row 1: View Full Page Button - Primary action */}
+              {onNavigateToActivity && (
+                <button
+                  onClick={() => {
+                    // Track this activity in recently viewed
+                    if (onAddToRecent) {
+                      onAddToRecent(project)
+                    }
+                    onNavigateToActivity(project.id, origin)
+                  }}
+                  className="w-full whitespace-nowrap flex-shrink-0 min-w-max px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-medium transition-colors flex items-center justify-center gap-2"
+                >
+                  View Full Page
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" />
+                  </svg>
+                </button>
+              )}
               
               {/* Row 2: Save and Comment together */}
               <div className="flex gap-2">
@@ -353,10 +445,10 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
                 </button>
                 
                 <button
-                  onClick={handleComment}
+                  onClick={handleShare}
                   className="flex-1 px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-lg font-medium transition-colors"
                 >
-                  Comment
+                  Share
                 </button>
               </div>
             </div>
@@ -391,7 +483,10 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
           {/* Second Row: Scrollable Activity Description and Team */}
           <div className="flex-1 min-h-0 w-full">
             <div className="bg-white rounded p-4 h-full w-full max-h-[400px] overflow-y-auto border-t-2 border-b-2 border-gray-100">
-              <h2 className="text-xl font-semibold text-gray-900 mb-3 sticky top-0 bg-white pb-2">Activity Description</h2>
+              <div className="sticky top-0 bg-white pb-2 mb-1">
+                <h2 className="text-xl font-semibold text-gray-900">Activity Preview</h2>
+                <p className="text-sm text-gray-500">Apply by clicking View Full Page above</p>
+              </div>
               
               {/* Description with Read More functionality */}
               <div className="mb-6">
@@ -445,7 +540,45 @@ const PostDetail = ({ postId, onBack, onApply, onSave, onComment, isDrawer = fal
               {/* Team Section */}
               {project.teamRoster && Object.keys(project.teamRoster).length > 0 && (
                 <div className="mt-6 border-t pt-4">
-                  <h3 className="text-lg font-semibold text-gray-900 mb-3">Team Members ({Object.keys(project.teamRoster).length})</h3>
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <h3 className="text-lg font-semibold text-gray-900">Team Members ({Object.keys(project.teamRoster).length})</h3>
+                      {/* Membership Status Indicator */}
+                      {user?.id && (
+                        <span className={`px-2 py-1 text-xs font-medium rounded-full ${
+                          project.ownerId === user.id
+                            ? 'bg-purple-100 text-purple-800' 
+                            : project.teamRoster && Object.keys(project.teamRoster).includes(user.id)
+                              ? 'bg-green-100 text-green-800' 
+                              : 'bg-gray-100 text-gray-800'
+                        }`}>
+                          {project.ownerId === user.id 
+                            ? 'Owner' 
+                            : project.teamRoster && Object.keys(project.teamRoster).includes(user.id)
+                              ? 'Member' 
+                              : 'Not a member'}
+                        </span>
+                      )}
+                    </div>
+                    {/* Leave Team Button - Always show for testing */}
+                    {user?.id && (
+                      <button
+                        onClick={handleLeaveTeam}
+                        disabled={isLeaving}
+                        className="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 border border-red-200 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        {isLeaving ? 'Leaving...' : 'Leave Team'}
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Team Error Message */}
+                  {teamError && (
+                    <div className="mb-3 p-3 bg-red-50 border border-red-200 rounded-md">
+                      <p className="text-sm text-red-700">{teamError}</p>
+                    </div>
+                  )}
+                  
                   <div className="space-y-3">
                     {Object.entries(project.teamRoster).map(([userId, role]) => {
                       const isCurrentUser = user?.id === userId
