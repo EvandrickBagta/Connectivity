@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react'
 import Explore from './Explore'
-import Profile from './Profile'
+import UserSearch from './UserSearch'
 import YourProjects from './YourProjects'
+import Profile from './Profile'
 
 const Home = ({ onNavigateToActivity }) => {
   // Initialize tab from URL hash
   const getInitialTab = () => {
     const hash = window.location.hash.replace('#', '')
-    if (hash === 'explore' || hash === 'your-activities' || hash === 'profile') {
+    if (hash === 'explore' || hash === 'user-search' || hash === 'your-activities' || hash === 'profile') {
       return hash
     }
     return 'explore' // Default to explore
@@ -17,6 +18,7 @@ const Home = ({ onNavigateToActivity }) => {
 
   const tabs = [
     { id: 'explore', label: 'Explore Activities', component: Explore, origin: 'explore' },
+    { id: 'user-search', label: 'User Search', component: UserSearch, origin: 'user-search' },
     { id: 'your-activities', label: 'Your Activities', component: YourProjects, origin: 'your-activities' },
     { id: 'profile', label: 'Profile', component: Profile, origin: 'profile' }
   ]
@@ -77,6 +79,9 @@ const Home = ({ onNavigateToActivity }) => {
             origin="explore"
             isActive={activeTab === 'explore'}
           />
+        </div>
+        <div style={{ display: activeTab === 'user-search' ? 'block' : 'none' }} key="user-search-tab">
+          <UserSearch />
         </div>
         <div style={{ display: activeTab === 'your-activities' ? 'block' : 'none' }} key="your-activities-tab">
           <YourProjects 

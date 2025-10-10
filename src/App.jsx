@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react'
 import LandingPage from './pages/LandingPage'
 import Home from './pages/Home'
 import Explore from './pages/Explore'
+import UserSearch from './pages/UserSearch'
+import Messages from './pages/Messages'
 import Profile from './pages/Profile'
 import YourProjects from './pages/YourProjects'
 import ActivityPage from './pages/ActivityPage'
@@ -40,6 +42,12 @@ function App() {
       } else if (path === '/explore' || hash === '#explore') {
         console.log('📍 Setting page to explore')
         setCurrentPage('explore')
+      } else if (path === '/user-search' || hash === '#user-search') {
+        console.log('📍 Setting page to user-search')
+        setCurrentPage('user-search')
+      } else if (path === '/messages' || hash === '#messages') {
+        console.log('📍 Setting page to messages')
+        setCurrentPage('messages')
       } else if (path === '/profile' || hash === '#profile') {
         console.log('📍 Setting page to profile')
         setCurrentPage('profile')
@@ -99,6 +107,12 @@ function App() {
     window.history.pushState({}, '', '/profile')
   }
   
+  const navigateToMessages = () => {
+    console.log('🧭 Navigating to messages')
+    setCurrentPage('messages')
+    window.history.pushState({}, '', '/messages')
+  }
+  
   const navigateToYourProjects = () => {
     console.log('🧭 Navigating to your-projects')
     setCurrentPage('your-projects')
@@ -156,6 +170,7 @@ function App() {
         currentPage={currentPage}
         onNavigateToLanding={navigateToLanding}
         onNavigateToHome={navigateToHome}
+        onNavigateToMessages={navigateToMessages}
       />
       
       {/* Main Content */}
@@ -174,6 +189,10 @@ function App() {
           <Explore 
             onNavigateToActivity={navigateToActivity}
           />
+        ) : currentPage === 'user-search' ? (
+          <UserSearch />
+        ) : currentPage === 'messages' ? (
+          <Messages />
         ) : currentPage === 'profile' ? (
           <Profile />
         ) : currentPage === 'your-projects' ? (

@@ -1,7 +1,7 @@
 import React from 'react'
 import { SignedIn, SignedOut, SignInButton, UserButton } from '@clerk/clerk-react'
 
-const Navbar = ({ currentPage, onNavigateToLanding, onNavigateToHome }) => {
+const Navbar = ({ currentPage, onNavigateToLanding, onNavigateToHome, onNavigateToMessages }) => {
   return (
     <header className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm shadow-sm border-b border-gray-100">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,6 +32,16 @@ const Navbar = ({ currentPage, onNavigateToLanding, onNavigateToHome }) => {
               }`}
             >
               Home
+            </button>
+            <button 
+              onClick={onNavigateToMessages}
+              className={`px-3 py-2 text-sm font-medium relative after:content-[''] after:absolute after:bottom-0 after:left-1/2 after:-translate-x-1/2 after:w-0 after:h-px after:bg-gray-200 hover:after:w-full hover:after:bg-gray-400 after:transition-all after:duration-300 hover:scale-105 ${
+                currentPage === 'messages' 
+                  ? 'text-gray-900 after:w-full after:bg-gray-400' 
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Messages
             </button>
           </nav>
           
