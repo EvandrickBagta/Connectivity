@@ -8,6 +8,8 @@ import Profile from './pages/Profile'
 import YourProjects from './pages/YourProjects'
 import ActivityPage from './pages/ActivityPage'
 import Navbar from './components/Navbar'
+import Sidebar from './components/Sidebar'
+import PageTransition from './components/PageTransition'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('landing')
@@ -119,6 +121,20 @@ function App() {
     window.history.pushState({}, '', '/your-projects')
   }
 
+  const navigateToUserSearch = () => {
+    console.log('🧭 Navigating to user-search')
+    setCurrentPage('user-search')
+    window.history.pushState({}, '', '/user-search')
+  }
+
+  const handleSearch = (query) => {
+    console.log('🔍 Search query:', query)
+    // For now, navigate to explore with search query
+    // This could be enhanced to show search results
+    setCurrentPage('explore')
+    window.history.pushState({}, '', `/explore?search=${encodeURIComponent(query)}`)
+  }
+
   const navigateToActivity = (id, origin = 'explore') => {
     console.log('🧭 Navigating to activity:', { id, origin })
     
@@ -163,46 +179,64 @@ function App() {
     window.history.pushState({}, '', url)
   }
 
+  console.log('🔍 Current page:', currentPage)
+  
   return (
-    <div>
-      {/* Shared Navbar */}
-      <Navbar 
-        currentPage={currentPage}
-        onNavigateToLanding={navigateToLanding}
-        onNavigateToHome={navigateToHome}
-        onNavigateToMessages={navigateToMessages}
-      />
+    <div className="min-h-screen">
+      {/* Fixed Transparent Navbar */}
+          <Navbar />
       
-      {/* Main Content */}
-      <main>
-        {currentPage === 'activity' ? (
-          <ActivityPage 
-            activityId={activityId}
-            origin={activityOrigin}
-            onNavigateBack={navigateBackFromActivity}
-          />
-        ) : currentPage === 'home' ? (
-          <Home 
-            onNavigateToActivity={navigateToActivity}
-          />
-        ) : currentPage === 'explore' ? (
-          <Explore 
-            onNavigateToActivity={navigateToActivity}
-          />
-        ) : currentPage === 'user-search' ? (
-          <UserSearch />
-        ) : currentPage === 'messages' ? (
-          <Messages />
-        ) : currentPage === 'profile' ? (
-          <Profile />
-        ) : currentPage === 'your-projects' ? (
-          <YourProjects 
-            onNavigateToActivity={navigateToActivity}
-          />
-        ) : (
-          <LandingPage onNavigateToHome={navigateToHome} onNavigateToAbout={navigateToLanding} />
-        )}
-      </main>
+      {/* Main Layout */}
+      <div className="flex">
+        {/* Sidebar - show on all pages */}
+        <Sidebar 
+          currentPage={currentPage}
+          onNavigateToLanding={navigateToLanding}
+          onNavigateToHome={navigateToHome}
+          onNavigateToMessages={navigateToMessages}
+          onNavigateToExplore={navigateToExplore}
+          onNavigateToUserSearch={navigateToUserSearch}
+          onNavigateToProfile={navigateToProfile}
+          onNavigateToYourProjects={navigateToYourProjects}
+        />
+        
+        {/* Main Content */}
+        <main className={`flex-1 ml-64 ${currentPage === 'landing' ? '' : 'pt-16'}`}>
+          <PageTransition>
+            {currentPage === 'activity' ? (
+              <ActivityPage 
+                activityId={activityId}
+                origin={activityOrigin}
+                onNavigateBack={navigateBackFromActivity}
+              />
+            ) : currentPage === 'home' ? (
+              <Home 
+                onNavigateToActivity={navigateToActivity}
+              />
+            ) : currentPage === 'explore' ? (
+              <Explore 
+                onNavigateToActivity={navigateToActivity}
+              />
+            ) : currentPage === 'user-search' ? (
+              <UserSearch />
+            ) : currentPage === 'messages' ? (
+              <Messages />
+            ) : currentPage === 'profile' ? (
+              <Profile />
+            ) : currentPage === 'your-projects' ? (
+              <YourProjects 
+                onNavigateToActivity={navigateToActivity}
+              />
+            ) : (
+              <LandingPage 
+                onNavigateToHome={navigateToHome} 
+                onNavigateToAbout={navigateToLanding}
+                currentPage={currentPage}
+              />
+            )}
+          </PageTransition>
+        </main>
+      </div>
     </div>
   )
 }
